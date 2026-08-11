@@ -1,0 +1,15 @@
+{
+  "id": "org.webosbrew.appupdateblocker",
+  "version": "1.0.1",
+  "type": "web",
+  "title": "LG App Update Blocker",
+  "appDescription": "LG App Update Blocker with 5-way remote navigation, visible focus, and OK-button support for the TV interface.",
+  "iconUri": "https://raw.githubusercontent.com/dr0dr1dr2dr3/lgappupdateblocker/9e48b292ce8fc7e776feb85763314e66c2061d02/assets/icon.png",
+  "sourceUrl": "https://github.com/dr0dr1dr2dr3/lgappupdateblocker",
+  "rootRequired": true,
+  "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
+  "ipkHash": {
+    "sha256": "51dd3e35d8935f7845eb9ea12205e2037dfe4ede0e3bea3b32bfde650f03e3b2"
+  },
+  "ipkSize": 76614
+}
