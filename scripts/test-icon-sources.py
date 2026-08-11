@@ -17,6 +17,8 @@ class LauncherIconDiscoveryTests(unittest.TestCase):
             source = Path(tmp)
             assets = source / "assets"
             assets.mkdir()
+            for name in ("icon.png", "largeIcon.png", "mediumLargeIcon.png", "extraLargeIcon.png", "playIcon.png"):
+                (assets / name).touch()
             (assets / "appinfo.json").write_text(
                 json.dumps(
                     {
@@ -44,11 +46,28 @@ class LauncherIconDiscoveryTests(unittest.TestCase):
             )
             self.assertNotIn("assets/playIcon.png", paths)
 
+    def test_root_manifest_resolves_assets_directory_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            assets = source / "assets"
+            assets.mkdir()
+            (assets / "icon.png").touch()
+            (assets / "largeIcon.png").touch()
+            (source / "appinfo.json").write_text(
+                json.dumps({"icon": "icon.png", "largeIcon": "largeIcon.png"}),
+                encoding="utf-8",
+            )
+
+            paths = discover_launcher_icon_paths(source, ["assets/icon.png"])
+            self.assertEqual(paths, ["assets/icon.png", "assets/largeIcon.png"])
+
     def test_explicit_icon_order_is_preserved_and_duplicates_are_removed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp)
             assets = source / "assets"
             assets.mkdir()
+            (assets / "icon.png").touch()
+            (assets / "largeIcon.png").touch()
             (assets / "appinfo.json").write_text(
                 json.dumps({"icon": "icon.png", "largeIcon": "largeIcon.png"}),
                 encoding="utf-8",
