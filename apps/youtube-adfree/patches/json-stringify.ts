@@ -41,10 +41,10 @@ function cloneRecordWithProperty(
     if (name === key) {
       Object.defineProperty(clone, name, {
         value: replacement,
-        enumerable: forceEnumerable ? true : descriptor.enumerable,
-        configurable: descriptor.configurable,
+        enumerable: forceEnumerable ? true : Boolean(descriptor.enumerable),
+        configurable: Boolean(descriptor.configurable),
         writable: Object.prototype.hasOwnProperty.call(descriptor, 'writable')
-          ? descriptor.writable
+          ? Boolean(descriptor.writable)
           : true
       });
       replaced = true;
