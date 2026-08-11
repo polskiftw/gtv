@@ -8,7 +8,7 @@ Patched applications keep their upstream artwork and receive a lowercase `g` dur
 
 The renderer:
 
-1. renders `g` from the vendored Quicksand font at four times the final resolution;
+1. renders a lowercase `g` directly from Pricedown Black, the GTA logo typeface, at four times the final resolution;
 2. builds exact glyph, support, and glow masks at the configured placement;
 3. samples alpha-aware local neighborhoods under the complete badge footprint;
 4. converts those samples to OKLab;
@@ -19,7 +19,7 @@ The renderer:
 9. synthesizes a dark support edge, colored bloom, saturated tube, and bright inner core; and
 10. downscales with Lanczos while copying untouched source pixels back exactly.
 
-The calculation is deterministic. A failure to load the font, find a configured source icon, satisfy its expected dimensions, generate the repository icon, or validate the packaged icon fails the build.
+The calculation is deterministic. A missing, modified, invalid, or incorrectly identified font; a missing configured source icon; an unexpected source dimension; or a package/icon validation failure fails the build.
 
 ## Application metadata
 
@@ -50,8 +50,8 @@ Patched applications enable the pipeline in `apps/<name>/app.json`:
 - `expectedSize` makes accidental upstream artwork changes fail loudly.
 - `sourceIcons` lists every source-relative icon that must be replaced before packaging. The first also becomes `repo/icons/<slug>.png` for Homebrew Channel.
 
-## Font
+## Typeface source
 
-`fonts/Quicksand.ttf` is the unmodified Quicksand variable font from the [Google Fonts repository](https://github.com/google/fonts/tree/main/ofl/quicksand), SHA-256 `39c9b64223561f56aaff6062a6f04063c4fc86809ad6768722c06614d977e1cc`.
+The build downloads [Typodermic's official free desktop font bundle](https://typodermicfonts.com/downloads/) and extracts Pricedown Black version 5.200 into the runner's temporary directory. Both the bundle and OTF are pinned by SHA-256 before use; the OTF hash is `19f8cd90ce76992c565debe80d167f58e6e1e79a6e0b86f24bd9dce12052b256`.
 
-Quicksand is Copyright 2011 The Quicksand Project Authors and is distributed under the SIL Open Font License 1.1. Its license is preserved in `fonts/OFL.txt` and applies only to the font software, not to unrelated applications in this repository.
+Pricedown Black is Copyright 1998–2024 Typodermic Fonts Inc. Typodermic's complimentary desktop license permits creating and distributing static graphics. The font remains temporary build input: it is not committed, modified, embedded in the application, or included in the IPK. Only the finished static PNG icon is published.

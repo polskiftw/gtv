@@ -9,8 +9,7 @@ webOS homebrew apps.
 ```text
 gtv/
 ├─ branding/
-│  ├─ fonts/              # vendored font and its own license
-│  ├─ README.md           # dynamic badge algorithm and metadata
+│  ├─ README.md           # dynamic badge algorithm and typeface provenance
 │  └─ requirements.txt    # pinned image-build dependencies
 ├─ apps/
 │  ├─ <app-name>/
@@ -44,7 +43,7 @@ Generated repository files are build outputs. Application source, patch files, m
 
 ## Patched-app branding
 
-Patched applications retain their upstream icons but receive a generated lowercase neon `g` in both the installed package and Homebrew Channel listing. Its color is not selected from a fixed palette: the build analyzes the exact source pixels underneath the glyph, optimizes a continuous OKLab color field for local contrast, regularizes neighboring colors into a coherent sign, and renders a colored tube and bloom at high resolution.
+Patched applications retain their upstream icons but receive a generated lowercase neon `g` in the Pricedown Black GTA logo typeface in both the installed package and Homebrew Channel listing. Its color is not selected from a fixed palette: the build analyzes the exact source pixels underneath the glyph, optimizes a continuous OKLab color field for local contrast, regularizes neighboring colors into a coherent sign, and renders a colored tube and bloom at high resolution.
 
 Per-app placement, scale, padding, expected dimensions, and source icon paths live in the application's `branding` metadata. The implementation and metadata contract are documented in [`branding/README.md`](branding/README.md).
 

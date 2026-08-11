@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 import numpy as np
 from PIL import Image
@@ -32,9 +33,13 @@ class SmartBadgeTests(unittest.TestCase):
             BadgeConfig(placement="bottom-right", scale=0.34, padding=0.04, work_scale=2),
         )
 
-    def test_font_rendered_continuous_optimizer_is_active(self) -> None:
+    def test_pricedown_gta_glyph_and_continuous_optimizer_are_active(self) -> None:
         self.assertEqual(self.diagnostics["glyph"], "g")
-        self.assertEqual(self.diagnostics["font"], "Quicksand.ttf")
+        self.assertEqual(self.diagnostics["font"], "Pricedown Black")
+        self.assertEqual(
+            self.diagnostics["font_sha256"],
+            "19f8cd90ce76992c565debe80d167f58e6e1e79a6e0b86f24bd9dce12052b256",
+        )
         self.assertGreaterEqual(self.diagnostics["continuous_candidates"], 50_000)
         self.assertGreater(self.diagnostics["control_points"], 200)
         self.assertEqual(self.diagnostics["regularization_iterations"], 24)
@@ -67,6 +72,22 @@ class SmartBadgeTests(unittest.TestCase):
         self.assertEqual(self.output.size, self.source.size)
         self.assertEqual(self.output.mode, "RGBA")
         self.assertEqual(self.output.getpixel((0, 0))[3], 0)
+
+    def test_missing_font_fails_closed(self) -> None:
+        with self.assertRaisesRegex(FileNotFoundError, "badge font not found"):
+            generate_branded_icon(
+                self.source,
+                BadgeConfig(placement="bottom-right", scale=0.34, padding=0.04, work_scale=2),
+                Path("does-not-exist.png"),
+            )
+
+    def test_wrong_font_hash_fails_closed(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "unexpected Pricedown font hash"):
+            generate_branded_icon(
+                self.source,
+                BadgeConfig(placement="bottom-right", scale=0.34, padding=0.04, work_scale=2),
+                Path(__file__),
+            )
 
 
 if __name__ == "__main__":

@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,7 +15,9 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_FONT = ROOT / "branding" / "fonts" / "Quicksand.ttf"
+DEFAULT_FONT = Path(os.environ.get("GTV_PRICEDOWN_FONT", ROOT / ".cache" / "Pricedown Bl.otf"))
+GLYPH_TYPEFACE = "Pricedown Black"
+PRICEDOWN_FONT_SHA256 = "19f8cd90ce76992c565debe80d167f58e6e1e79a6e0b86f24bd9dce12052b256"
 SUPPORTED_PLACEMENTS = {"top-left", "top-right", "bottom-left", "bottom-right"}
 
 
@@ -127,26 +131,30 @@ def _resize_field(values: np.ndarray, size: tuple[int, int]) -> np.ndarray:
     return np.stack(channels, axis=-1)
 
 
-def _make_bold_font(path: Path, size: int) -> ImageFont.FreeTypeFont:
+def _make_pricedown_font(path: Path, size: int) -> ImageFont.FreeTypeFont:
     if not path.is_file():
         raise FileNotFoundError(f"badge font not found: {path}")
-    font = ImageFont.truetype(str(path), size=size)
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if digest != PRICEDOWN_FONT_SHA256:
+        raise RuntimeError(f"unexpected Pricedown font hash: {digest}")
     try:
-        font.set_variation_by_name("Bold")
-    except (AttributeError, OSError, ValueError):
-        # Static font builds do not expose variation controls; their baked weight is used.
-        pass
+        font = ImageFont.truetype(str(path), size=size)
+    except OSError as error:
+        raise ValueError(f"invalid badge font: {path}") from error
+    family, style = font.getname()
+    if (family, style) != ("Pricedown", "Black"):
+        raise RuntimeError(f"unexpected badge font identity: {family} {style}")
     return font
 
 
 def _glyph_mask(size: tuple[int, int], config: BadgeConfig, font_path: Path) -> tuple[np.ndarray, tuple[int, int, int, int]]:
     width, height = size
     target = max(24, int(min(width, height) * config.scale))
-    probe = _make_bold_font(font_path, target)
+    probe = _make_pricedown_font(font_path, target)
     probe_box = probe.getbbox("g")
     probe_extent = max(probe_box[2] - probe_box[0], probe_box[3] - probe_box[1])
     font_size = max(12, int(target * target / max(1, probe_extent)))
-    font = _make_bold_font(font_path, font_size)
+    font = _make_pricedown_font(font_path, font_size)
     box = font.getbbox("g")
     glyph_width, glyph_height = box[2] - box[0], box[3] - box[1]
     padding = int(min(width, height) * config.padding)
@@ -417,7 +425,8 @@ def generate_branded_icon(
     changed_y1, changed_x1 = changed.max(axis=0) + 1
     diagnostics.update(
         {
-            "font": font_path.name,
+            "font": GLYPH_TYPEFACE,
+            "font_sha256": hashlib.sha256(font_path.read_bytes()).hexdigest(),
             "glyph": "g",
             "glyph_bbox": [round(value / work_scale) for value in glyph_bbox],
             "field_bbox": [round(value / work_scale) for value in field_bbox],
