@@ -10,6 +10,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from badge_finish import apply_badge_opacity
 from smart_badge import BadgeConfig, generate_branded_icon
 
 
@@ -26,8 +27,6 @@ def main() -> None:
         raise SystemExit(f"branding is disabled for {metadata['slug']}; do not invoke the badge builder")
     config = BadgeConfig.from_metadata(branding)
     opacity = float(branding.get("opacity", 1.0))
-    if not 0.0 < opacity <= 1.0:
-        raise SystemExit("branding.opacity must be greater than 0.0 and at most 1.0")
     icon_paths = branding.get("sourceIcons")
     if not isinstance(icon_paths, list) or not icon_paths or not all(isinstance(path, str) and path for path in icon_paths):
         raise SystemExit("branding.sourceIcons must be a non-empty list of source-relative paths")
@@ -55,8 +54,7 @@ def main() -> None:
             cache_key = hashlib.sha256(rgba.tobytes()).hexdigest()
             if cache_key not in cache:
                 output, diagnostics = generate_branded_icon(rgba, config)
-                if opacity < 1.0:
-                    output = Image.blend(rgba, output, opacity)
+                output = apply_badge_opacity(rgba, output, opacity)
                 diagnostics = {**diagnostics, "opacity": opacity}
                 cache[cache_key] = (output, diagnostics)
             output, diagnostics = cache[cache_key]
