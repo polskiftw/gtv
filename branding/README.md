@@ -16,10 +16,11 @@ The renderer:
 6. applies edge-aware Laplacian regularization across the local color field;
 7. blends in a smoothed per-pixel correction so every glyph pixel responds to its own neighborhood;
 8. gamut-maps the field without changing its intended hue or lightness;
-9. synthesizes a dark support edge, colored bloom, saturated tube, and bright inner core; and
-10. downscales with Lanczos while copying untouched source pixels back exactly.
+9. synthesizes a dark support edge, colored bloom, saturated tube, and bright inner core;
+10. downscales with Lanczos while copying untouched source pixels back exactly; and
+11. optionally scales the complete branding treatment back toward the untouched source according to `opacity`.
 
-The calculation is deterministic. A missing, modified, invalid, or incorrectly identified font; a missing configured source icon; an unexpected source dimension; or a package/icon validation failure fails the build.
+The calculation is deterministic. A missing, modified, invalid, or incorrectly identified font; a missing configured source icon; an unexpected source dimension; an invalid opacity; or a package/icon validation failure fails the build.
 
 ## Application metadata
 
@@ -31,8 +32,9 @@ Patched applications enable the pipeline in `apps/<name>/app.json`:
     "enabled": true,
     "style": "dynamic-g-neon",
     "placement": "bottom-right",
-    "scale": 0.3,
+    "scale": 0.33,
     "padding": 0.05,
+    "opacity": 0.96,
     "expectedSize": [400, 400],
     "sourceIcons": [
       "assets/icon.png",
@@ -47,6 +49,7 @@ Patched applications enable the pipeline in `apps/<name>/app.json`:
 - `placement` supports `top-left`, `top-right`, `bottom-left`, and `bottom-right`.
 - `scale` is the badge size relative to the shorter icon dimension.
 - `padding` is the edge inset relative to the shorter icon dimension.
+- `opacity` scales the finished branding treatment toward the untouched source image; `1.0` leaves the rendered badge at full strength.
 - `expectedSize` makes accidental upstream artwork changes fail loudly.
 - `sourceIcons` lists every source-relative icon that must be replaced before packaging. The first also becomes `repo/icons/<slug>.png` for Homebrew Channel.
 
