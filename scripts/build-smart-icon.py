@@ -25,6 +25,9 @@ def main() -> None:
     if not branding.get("enabled", metadata.get("kind") == "upstream-patch"):
         raise SystemExit(f"branding is disabled for {metadata['slug']}; do not invoke the badge builder")
     config = BadgeConfig.from_metadata(branding)
+    opacity = float(branding.get("opacity", 1.0))
+    if not 0.0 < opacity <= 1.0:
+        raise SystemExit("branding.opacity must be greater than 0.0 and at most 1.0")
     icon_paths = branding.get("sourceIcons")
     if not isinstance(icon_paths, list) or not icon_paths or not all(isinstance(path, str) and path for path in icon_paths):
         raise SystemExit("branding.sourceIcons must be a non-empty list of source-relative paths")
@@ -51,7 +54,11 @@ def main() -> None:
             rgba = source.convert("RGBA")
             cache_key = hashlib.sha256(rgba.tobytes()).hexdigest()
             if cache_key not in cache:
-                cache[cache_key] = generate_branded_icon(rgba, config)
+                output, diagnostics = generate_branded_icon(rgba, config)
+                if opacity < 1.0:
+                    output = Image.blend(rgba, output, opacity)
+                diagnostics = {**diagnostics, "opacity": opacity}
+                cache[cache_key] = (output, diagnostics)
             output, diagnostics = cache[cache_key]
         output.save(icon_path, format="PNG", optimize=True)
         branded.append((icon_path, output, diagnostics))
