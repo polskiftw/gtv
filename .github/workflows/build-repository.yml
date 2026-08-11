@@ -50,6 +50,9 @@ jobs:
       - name: Test YouTube Shorts filter
         run: node apps/youtube-adfree/tests/test-shorts-filter.mjs apps/youtube-adfree/patches/shorts-filter.js
 
+      - name: Test YouTube JSON stringify hook
+        run: node apps/youtube-adfree/tests/test-json-stringify-hook.mjs apps/youtube-adfree/patches/json-stringify.ts
+
       - name: Build patched applications
         shell: bash
         run: |
@@ -87,6 +90,7 @@ jobs:
 
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
           node "$APP_DIR/tests/test-shorts-filter.mjs" "$SRC/src/shorts-filter.js"
+          node "$APP_DIR/tests/test-json-stringify-hook.mjs" "$SRC/src/hooks/json-stringify.ts"
           python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
             --metadata "$APP_DIR/app.json" \
             --source "$SRC" \
@@ -96,6 +100,7 @@ jobs:
           corepack enable
           pnpm install --frozen-lockfile
           pnpm run build
+          pnpm run test:compat
           pnpm run package
 
           IPK=$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)
