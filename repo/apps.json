@@ -11,22 +11,22 @@
     {
       "id": "org.webosbrew.appupdateblocker",
       "title": "LG App Update Blocker",
-      "iconUri": "https://raw.githubusercontent.com/dr0dr1dr2dr3/lgappupdateblocker/9e48b292ce8fc7e776feb85763314e66c2061d02/assets/icon.png",
+      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/lg-app-update-blocker.png",
       "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/lg-app-update-blocker.json",
       "manifest": {
         "id": "org.webosbrew.appupdateblocker",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "type": "web",
         "title": "LG App Update Blocker",
         "appDescription": "LG App Update Blocker with 5-way remote navigation, visible focus, OK-button support, deterministic startup focus, and safe exclusion of text-entry fields from D-pad navigation.",
-        "iconUri": "https://raw.githubusercontent.com/dr0dr1dr2dr3/lgappupdateblocker/9e48b292ce8fc7e776feb85763314e66c2061d02/assets/icon.png",
+        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/lg-app-update-blocker.png",
         "sourceUrl": "https://github.com/dr0dr1dr2dr3/lgappupdateblocker",
         "rootRequired": true,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "44e27fb097efb585fb44d396c14d2d82683ce83486459b00f383e4ae329c22e4"
+          "sha256": "1c3d947356c43cd860ab39f3d9abb515af168bb7ec3246f2373f104a7c08c8de"
         },
-        "ipkSize": 76964
+        "ipkSize": 121144
       },
       "pool": "main",
       "requirements": {

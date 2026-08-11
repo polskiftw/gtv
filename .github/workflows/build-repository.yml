@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'apps/**'
+      - 'branding/**'
       - 'scripts/**'
       - '.github/workflows/build-repository.yml'
 
@@ -20,6 +21,19 @@ jobs:
       - name: Check out gtv
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: branding/requirements.txt
+
+      - name: Install branding dependencies
+        run: python -m pip install --disable-pip-version-check -r branding/requirements.txt
+
+      - name: Test smart icon renderer
+        run: python scripts/test-smart-icon.py
+
       - name: Build patched applications
         shell: bash
         run: |
@@ -33,6 +47,10 @@ jobs:
           git -C "$SRC" checkout 9e48b292ce8fc7e776feb85763314e66c2061d02
 
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
+          python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
+            --metadata "$APP_DIR/app.json" \
+            --source "$SRC" \
+            --repository-icon "$GITHUB_WORKSPACE/repo/icons/lg-app-update-blocker.png"
 
           cd "$SRC"
           npm install
@@ -48,12 +66,7 @@ jobs:
         run: python3 scripts/build-repository.py
 
       - name: Validate generated repository
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m json.tool repo/apps.json >/dev/null
-          python3 -m json.tool repo/manifests/lg-app-update-blocker.json >/dev/null
-          test -s repo/packages/lg-app-update-blocker.ipk
+        run: python scripts/validate-repository.py
 
       - name: Publish generated repository
         shell: bash
