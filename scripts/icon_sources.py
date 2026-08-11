@@ -19,15 +19,23 @@ _LAUNCHER_ICON_KEYS = {
 def discover_launcher_icon_paths(source: Path, explicit_paths: list[str]) -> list[str]:
     """Return explicit branding icons plus every launcher icon declared by appinfo.json.
 
-    Explicit paths remain first so the canonical repository/HBC icon is stable.  Any
-    launcher icon added by an upstream app is then picked up automatically, preventing
-    higher-resolution webOS launcher assets from escaping GTV branding.
+    Explicit paths remain first so the canonical repository/HBC icon is stable. Any
+    launcher icon added upstream is picked up automatically. Manifest paths are first
+    resolved relative to appinfo.json, then against assets/ for projects that relocate
+    launcher artwork during their build.
     """
+    source = source.resolve()
     ordered: list[str] = []
     seen: set[str] = set()
 
-    def add(path: str) -> None:
-        normalized = Path(path).as_posix().lstrip("./")
+    def add(path: Path | str) -> None:
+        candidate = Path(path)
+        if candidate.is_absolute():
+            try:
+                candidate = candidate.relative_to(source)
+            except ValueError as exc:
+                raise ValueError(f"launcher icon escapes source directory: {candidate}") from exc
+        normalized = candidate.as_posix().lstrip("./")
         if normalized and normalized not in seen:
             seen.add(normalized)
             ordered.append(normalized)
@@ -41,10 +49,16 @@ def discover_launcher_icon_paths(source: Path, explicit_paths: list[str]) -> lis
         return ordered
 
     appinfo = json.loads(appinfo_path.read_text(encoding="utf-8"))
-    appinfo_dir = appinfo_path.parent.relative_to(source)
     for key in _LAUNCHER_ICON_KEYS:
         value = appinfo.get(key)
-        if isinstance(value, str) and value:
-            add((appinfo_dir / value).as_posix())
+        if not isinstance(value, str) or not value:
+            continue
+
+        manifest_relative = (appinfo_path.parent / value).resolve()
+        assets_fallback = (source / "assets" / value).resolve()
+        resolved = next((path for path in (manifest_relative, assets_fallback) if path.is_file()), None)
+        if resolved is None:
+            raise ValueError(f"launcher icon declared by {appinfo_path.name} does not exist: {value}")
+        add(resolved)
 
     return ordered
