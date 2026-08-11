@@ -1,0 +1,15 @@
+/* Visible webOS remote focus. Original app only styled :hover. */
+button:focus:not(:disabled),
+a:focus,
+textarea:focus:not(:disabled),
+input:focus:not(:disabled),
+select:focus:not(:disabled) {
+    outline: 4px solid #ffffff !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 0 7px var(--text-accent) !important;
+}
+
+button:focus:not(:disabled) {
+    background-color: var(--button-hover) !important;
+    transform: scale(1.03);
+}

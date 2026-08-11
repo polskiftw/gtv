@@ -1,0 +1,69 @@
+name: Build Homebrew repository
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'scripts/**'
+      - '.github/workflows/build-repository.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out gtv
+        uses: actions/checkout@v4
+
+      - name: Build patched applications
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_DIR="$GITHUB_WORKSPACE/apps/lg-app-update-blocker"
+          SRC="$RUNNER_TEMP/lg-app-update-blocker"
+          rm -rf "$SRC"
+
+          git clone https://github.com/dr0dr1dr2dr3/lgappupdateblocker.git "$SRC"
+          git -C "$SRC" checkout 9e48b292ce8fc7e776feb85763314e66c2061d02
+
+          python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches"
+
+          cd "$SRC"
+          npm install
+          npm run build
+          npm run package
+
+          mkdir -p "$GITHUB_WORKSPACE/repo/packages"
+          IPK=$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)
+          test -n "$IPK"
+          cp "$IPK" "$GITHUB_WORKSPACE/repo/packages/lg-app-update-blocker.ipk"
+
+      - name: Generate Homebrew Channel feed
+        run: python3 scripts/build-repository.py
+
+      - name: Validate generated repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool repo/apps.json >/dev/null
+          python3 -m json.tool repo/manifests/lg-app-update-blocker.json >/dev/null
+          test -s repo/packages/lg-app-update-blocker.ipk
+
+      - name: Publish generated repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add repo/
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Build Homebrew repository'
+          git push
