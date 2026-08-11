@@ -3,13 +3,19 @@
 
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
-from smart_badge import BadgeConfig, generate_branded_icon
+from badge_finish import apply_badge_opacity
+from smart_badge import DEFAULT_FONT, BadgeConfig, _glyph_mask, generate_branded_icon
+
+
+ROOT = Path(__file__).resolve().parents[1]
+PRODUCTION_METADATA = ROOT / "apps" / "lg-app-update-blocker" / "app.json"
 
 
 def synthetic_icon() -> Image.Image:
@@ -72,6 +78,57 @@ class SmartBadgeTests(unittest.TestCase):
         self.assertEqual(self.output.size, self.source.size)
         self.assertEqual(self.output.mode, "RGBA")
         self.assertEqual(self.output.getpixel((0, 0))[3], 0)
+
+    def test_production_branding_metadata_is_regression_locked(self) -> None:
+        metadata = json.loads(PRODUCTION_METADATA.read_text(encoding="utf-8"))
+        branding = metadata["branding"]
+        self.assertEqual(branding["expectedSize"], [400, 400])
+        self.assertEqual(branding["placement"], "bottom-right")
+        self.assertAlmostEqual(float(branding["scale"]), 0.33)
+        self.assertAlmostEqual(float(branding["padding"]), 0.05)
+        self.assertAlmostEqual(float(branding["opacity"]), 0.96)
+
+    def test_production_glyph_geometry_uses_real_400px_four_x_settings(self) -> None:
+        metadata = json.loads(PRODUCTION_METADATA.read_text(encoding="utf-8"))
+        config = BadgeConfig.from_metadata(metadata["branding"])
+        width, height = metadata["branding"]["expectedSize"]
+        work_size = (width * config.work_scale, height * config.work_scale)
+        _, (x0, y0, x1, y1) = _glyph_mask(work_size, config, DEFAULT_FONT)
+
+        glyph_extent = max(x1 - x0, y1 - y0) / config.work_scale
+        right_gap = (work_size[0] - x1) / config.work_scale
+        bottom_gap = (work_size[1] - y1) / config.work_scale
+
+        self.assertGreaterEqual(glyph_extent, 120.0)
+        self.assertLessEqual(glyph_extent, 145.0)
+        self.assertGreaterEqual(right_gap, 14.0)
+        self.assertLessEqual(right_gap, 25.0)
+        self.assertGreaterEqual(bottom_gap, 14.0)
+        self.assertLessEqual(bottom_gap, 25.0)
+        self.assertGreaterEqual(x0 / config.work_scale, 225.0)
+        self.assertGreaterEqual(y0 / config.work_scale, 225.0)
+
+    def test_badge_opacity_softens_only_the_branding_delta(self) -> None:
+        original = Image.new("RGBA", (2, 2), (40, 80, 120, 255))
+        branded = Image.new("RGBA", (2, 2), (220, 20, 180, 255))
+        softened = apply_badge_opacity(original, branded, 0.96)
+
+        before = np.asarray(original, dtype=np.int16)
+        full = np.asarray(branded, dtype=np.int16)
+        soft = np.asarray(softened, dtype=np.int16)
+        full_delta = int(np.abs(full - before).sum())
+        soft_delta = int(np.abs(soft - before).sum())
+
+        self.assertLess(soft_delta, full_delta)
+        self.assertGreater(soft_delta, full_delta * 0.93)
+        self.assertTrue(np.array_equal(np.asarray(apply_badge_opacity(original, branded, 1.0)), full))
+
+    def test_invalid_badge_opacity_fails_closed(self) -> None:
+        image = Image.new("RGBA", (1, 1), (0, 0, 0, 255))
+        with self.assertRaisesRegex(ValueError, "branding.opacity"):
+            apply_badge_opacity(image, image, 0.0)
+        with self.assertRaisesRegex(ValueError, "branding.opacity"):
+            apply_badge_opacity(image, image, 1.01)
 
     def test_missing_font_fails_closed(self) -> None:
         with self.assertRaisesRegex(FileNotFoundError, "badge font not found"):

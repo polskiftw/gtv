@@ -14,8 +14,9 @@
     "enabled": true,
     "style": "dynamic-g-neon",
     "placement": "bottom-right",
-    "scale": 0.3,
+    "scale": 0.33,
     "padding": 0.05,
+    "opacity": 0.96,
     "expectedSize": [
       400,
       400
