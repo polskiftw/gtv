@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import hashlib
+import html
 import json
 from pathlib import Path
+
+from versioning import derive_gtv_version
 
 ROOT = Path(__file__).resolve().parents[1]
 APPS = ROOT / "apps"
@@ -9,12 +12,40 @@ REPO = ROOT / "repo"
 PACKAGES = REPO / "packages"
 MANIFESTS = REPO / "manifests"
 ICONS = REPO / "icons"
+DESCRIPTIONS = REPO / "descriptions"
 RAW_BASE = "https://raw.githubusercontent.com/polskiftw/gtv/main/repo"
 
 REPO.mkdir(exist_ok=True)
 PACKAGES.mkdir(exist_ok=True)
 MANIFESTS.mkdir(exist_ok=True)
 ICONS.mkdir(exist_ok=True)
+DESCRIPTIONS.mkdir(exist_ok=True)
+
+
+def build_patch_description(metadata: dict[str, object]) -> str:
+    changes = metadata.get("changes")
+    upstream = metadata.get("upstream")
+    if not isinstance(changes, dict) or not isinstance(upstream, dict):
+        raise SystemExit(f"{metadata['slug']}: patched apps require changes and upstream metadata")
+
+    lines: list[str] = []
+    for key, label in (("added", "Added"), ("fixed", "Fixed")):
+        items = changes.get(key, [])
+        if not isinstance(items, list) or not items or not all(isinstance(item, str) and item.strip() for item in items):
+            raise SystemExit(f"{metadata['slug']}: changes.{key} must be a non-empty string list")
+        for item in items:
+            lines.append(f"<p><strong>{label}</strong> {html.escape(item.strip())}</p>")
+
+    upstream_name = upstream.get("name")
+    upstream_version = upstream.get("version")
+    source_url = upstream.get("sourceUrl")
+    if not all(isinstance(value, str) and value.strip() for value in (upstream_name, upstream_version, source_url)):
+        raise SystemExit(f"{metadata['slug']}: upstream name, version, and sourceUrl are required")
+    label = html.escape(f"{upstream_name} {upstream_version}")
+    href = html.escape(source_url, quote=True)
+    lines.append(f'<p>Based on <a href="{href}">{label}</a></p>')
+    return "\n".join(lines) + "\n"
+
 
 packages = []
 for metadata_path in sorted(APPS.glob("*/app.json")):
@@ -23,6 +54,18 @@ for metadata_path in sorted(APPS.glob("*/app.json")):
     ipk = PACKAGES / f"{slug}.ipk"
     if not ipk.exists():
         raise SystemExit(f"missing built package: {ipk.relative_to(ROOT)}")
+
+    if metadata.get("kind") == "upstream-patch":
+        expected_version = derive_gtv_version(metadata["upstream"]["version"], metadata["gtvRevision"])
+        if metadata["version"] != expected_version:
+            raise SystemExit(
+                f"{slug}: version {metadata['version']} does not match derived GTV version {expected_version}"
+            )
+        description_path = DESCRIPTIONS / f"{slug}.html"
+        description_path.write_text(build_patch_description(metadata), encoding="utf-8")
+        full_description_url = f"{RAW_BASE}/descriptions/{slug}.html"
+    else:
+        full_description_url = None
 
     branding = metadata.get("branding", {})
     if branding.get("enabled", metadata.get("kind") == "upstream-patch"):
@@ -50,7 +93,7 @@ for metadata_path in sorted(APPS.glob("*/app.json")):
     manifest_path = MANIFESTS / f"{slug}.json"
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
 
-    packages.append({
+    package = {
         "id": metadata["id"],
         "title": metadata["title"],
         "iconUri": icon_uri,
@@ -59,7 +102,10 @@ for metadata_path in sorted(APPS.glob("*/app.json")):
         "pool": "main",
         "requirements": metadata["requirements"],
         "shortDescription": metadata["shortDescription"],
-    })
+    }
+    if full_description_url:
+        package["fullDescriptionUrl"] = full_description_url
+    packages.append(package)
 
 feed = {
     "paging": {
