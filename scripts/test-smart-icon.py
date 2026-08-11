@@ -82,12 +82,12 @@ class SmartBadgeTests(unittest.TestCase):
     def test_production_branding_metadata_is_regression_locked(self) -> None:
         metadata = json.loads(PRODUCTION_METADATA.read_text(encoding="utf-8"))
         branding = metadata["branding"]
-        self.assertEqual(metadata["version"], "1.0.6")
+        self.assertEqual(metadata["version"], "1.0.7")
         self.assertEqual(branding["expectedSize"], [400, 400])
         self.assertEqual(branding["placement"], "bottom-right")
-        self.assertAlmostEqual(float(branding["scale"]), 0.36)
+        self.assertAlmostEqual(float(branding["scale"]), 0.416745)
         self.assertAlmostEqual(float(branding["padding"]), 0.05)
-        self.assertAlmostEqual(float(branding["opacity"]), 0.92)
+        self.assertAlmostEqual(float(branding["opacity"]), 0.788785)
 
     def test_production_glyph_geometry_uses_real_400px_four_x_settings(self) -> None:
         metadata = json.loads(PRODUCTION_METADATA.read_text(encoding="utf-8"))
@@ -100,8 +100,8 @@ class SmartBadgeTests(unittest.TestCase):
         right_gap = (work_size[0] - x1) / config.work_scale
         bottom_gap = (work_size[1] - y1) / config.work_scale
 
-        self.assertGreaterEqual(glyph_extent, 130.0)
-        self.assertLessEqual(glyph_extent, 160.0)
+        self.assertGreaterEqual(glyph_extent, 165.0)
+        self.assertLessEqual(glyph_extent, 180.0)
         self.assertGreaterEqual(right_gap, 14.0)
         self.assertLessEqual(right_gap, 25.0)
         self.assertGreaterEqual(bottom_gap, 14.0)
