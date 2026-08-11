@@ -4,11 +4,14 @@ import shutil
 import sys
 from pathlib import Path
 
-if len(sys.argv) != 3:
-    raise SystemExit("usage: apply.py <upstream-source> <patch-directory>")
+if len(sys.argv) != 4:
+    raise SystemExit("usage: apply.py <upstream-source> <patch-directory> <app-metadata>")
 
 source = Path(sys.argv[1]).resolve()
 patches = Path(sys.argv[2]).resolve()
+metadata_path = Path(sys.argv[3]).resolve()
+metadata = json.loads(metadata_path.read_text())
+version = metadata["version"]
 
 shutil.copy2(patches / "remote-navigation.js", source / "frontend" / "remote-navigation.js")
 shutil.copy2(patches / "remote-focus.css", source / "frontend" / "remote-focus.css")
@@ -38,5 +41,5 @@ webpack.write_text(text)
 
 package = source / "package.json"
 data = json.loads(package.read_text())
-data["version"] = "1.0.1"
+data["version"] = version
 package.write_text(json.dumps(data, indent=2) + "\n")
