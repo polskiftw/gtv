@@ -82,11 +82,12 @@ class SmartBadgeTests(unittest.TestCase):
     def test_production_branding_metadata_is_regression_locked(self) -> None:
         metadata = json.loads(PRODUCTION_METADATA.read_text(encoding="utf-8"))
         branding = metadata["branding"]
+        self.assertEqual(metadata["version"], "1.0.6")
         self.assertEqual(branding["expectedSize"], [400, 400])
         self.assertEqual(branding["placement"], "bottom-right")
-        self.assertAlmostEqual(float(branding["scale"]), 0.33)
+        self.assertAlmostEqual(float(branding["scale"]), 0.36)
         self.assertAlmostEqual(float(branding["padding"]), 0.05)
-        self.assertAlmostEqual(float(branding["opacity"]), 0.96)
+        self.assertAlmostEqual(float(branding["opacity"]), 0.92)
 
     def test_production_glyph_geometry_uses_real_400px_four_x_settings(self) -> None:
         metadata = json.loads(PRODUCTION_METADATA.read_text(encoding="utf-8"))
@@ -99,19 +100,19 @@ class SmartBadgeTests(unittest.TestCase):
         right_gap = (work_size[0] - x1) / config.work_scale
         bottom_gap = (work_size[1] - y1) / config.work_scale
 
-        self.assertGreaterEqual(glyph_extent, 120.0)
-        self.assertLessEqual(glyph_extent, 145.0)
+        self.assertGreaterEqual(glyph_extent, 130.0)
+        self.assertLessEqual(glyph_extent, 160.0)
         self.assertGreaterEqual(right_gap, 14.0)
         self.assertLessEqual(right_gap, 25.0)
         self.assertGreaterEqual(bottom_gap, 14.0)
         self.assertLessEqual(bottom_gap, 25.0)
-        self.assertGreaterEqual(x0 / config.work_scale, 225.0)
-        self.assertGreaterEqual(y0 / config.work_scale, 225.0)
+        self.assertGreaterEqual(x0 / config.work_scale, 210.0)
+        self.assertGreaterEqual(y0 / config.work_scale, 210.0)
 
     def test_badge_opacity_softens_only_the_branding_delta(self) -> None:
         original = Image.new("RGBA", (2, 2), (40, 80, 120, 255))
         branded = Image.new("RGBA", (2, 2), (220, 20, 180, 255))
-        softened = apply_badge_opacity(original, branded, 0.96)
+        softened = apply_badge_opacity(original, branded, 0.92)
 
         before = np.asarray(original, dtype=np.int16)
         full = np.asarray(branded, dtype=np.int16)
@@ -120,7 +121,7 @@ class SmartBadgeTests(unittest.TestCase):
         soft_delta = int(np.abs(soft - before).sum())
 
         self.assertLess(soft_delta, full_delta)
-        self.assertGreater(soft_delta, full_delta * 0.93)
+        self.assertGreater(soft_delta, full_delta * 0.89)
         self.assertTrue(np.array_equal(np.asarray(apply_badge_opacity(original, branded, 1.0)), full))
 
     def test_invalid_badge_opacity_fails_closed(self) -> None:
