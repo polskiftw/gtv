@@ -32,7 +32,7 @@ jobs:
           git clone https://github.com/dr0dr1dr2dr3/lgappupdateblocker.git "$SRC"
           git -C "$SRC" checkout 9e48b292ce8fc7e776feb85763314e66c2061d02
 
-          python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches"
+          python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
 
           cd "$SRC"
           npm install
