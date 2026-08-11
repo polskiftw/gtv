@@ -1,20 +1,20 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const sourcePath = process.argv[2];
 if (!sourcePath) {
   throw new Error('usage: test-json-stringify-hook.mjs <hook-source>');
 }
 
-const source = fs.readFileSync(sourcePath, 'utf8');
 const originalStringify = JSON.stringify;
 const originalInfo = console.info;
 
 try {
   console.info = () => {};
-  await import(
-    `data:text/javascript;base64,${Buffer.from(source).toString('base64')}#${Date.now()}`
-  );
+  const sourceUrl = pathToFileURL(path.resolve(sourcePath));
+  sourceUrl.searchParams.set('testRun', `${Date.now()}`);
+  await import(sourceUrl.href);
 
   const unrelated = { a: 1, f() {} };
   assert.equal(originalStringify(unrelated), '{"a":1}');
@@ -89,6 +89,12 @@ try {
       .contentPlaybackContext.isInlinePlaybackNoAd,
     true
   );
+
+  const date = new Date('2026-08-11T00:00:00Z');
+  date.playbackContext = {
+    contentPlaybackContext: { signatureTimestamp: 1 }
+  };
+  assert.equal(JSON.stringify(date), originalStringify(date));
 
   const circular = {};
   circular.self = circular;
