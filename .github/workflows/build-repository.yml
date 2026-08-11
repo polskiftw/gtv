@@ -47,6 +47,9 @@ jobs:
       - name: Test smart icon renderer
         run: python scripts/test-smart-icon.py
 
+      - name: Test launcher icon discovery
+        run: python scripts/test-icon-sources.py
+
       - name: Test YouTube Shorts filter
         run: node apps/youtube-adfree/tests/test-shorts-filter.mjs apps/youtube-adfree/patches/shorts-filter.js
 

@@ -11,6 +11,7 @@ from pathlib import Path
 from PIL import Image
 
 from badge_finish import apply_badge_opacity
+from icon_sources import discover_launcher_icon_paths
 from smart_badge import BadgeConfig, generate_branded_icon
 
 
@@ -27,28 +28,38 @@ def main() -> None:
         raise SystemExit(f"branding is disabled for {metadata['slug']}; do not invoke the badge builder")
     config = BadgeConfig.from_metadata(branding)
     opacity = float(branding.get("opacity", 1.0))
-    icon_paths = branding.get("sourceIcons")
-    if not isinstance(icon_paths, list) or not icon_paths or not all(isinstance(path, str) and path for path in icon_paths):
-        raise SystemExit("branding.sourceIcons must be a non-empty list of source-relative paths")
-    expected_size = branding.get("expectedSize")
+    explicit_icon_paths = branding.get("sourceIcons")
     if (
+        not isinstance(explicit_icon_paths, list)
+        or not explicit_icon_paths
+        or not all(isinstance(path, str) and path for path in explicit_icon_paths)
+    ):
+        raise SystemExit("branding.sourceIcons must be a non-empty list of source-relative paths")
+
+    icon_paths = discover_launcher_icon_paths(args.source.resolve(), explicit_icon_paths)
+    if not icon_paths:
+        raise SystemExit("no launcher icons were discovered for branding")
+
+    expected_size = branding.get("expectedSize")
+    if expected_size is not None and (
         not isinstance(expected_size, list)
         or len(expected_size) != 2
         or not all(isinstance(value, int) and value > 0 for value in expected_size)
     ):
-        raise SystemExit("branding.expectedSize must be [width, height]")
+        raise SystemExit("branding.expectedSize must be [width, height] when provided")
 
     branded: list[tuple[Path, Image.Image, dict[str, object]]] = []
     cache: dict[str, tuple[Image.Image, dict[str, object]]] = {}
-    for relative in icon_paths:
-        icon_path = (args.source / relative).resolve()
-        if args.source.resolve() not in icon_path.parents:
+    source_root = args.source.resolve()
+    for index, relative in enumerate(icon_paths):
+        icon_path = (source_root / relative).resolve()
+        if source_root not in icon_path.parents:
             raise SystemExit(f"branding icon escapes source directory: {relative}")
         if not icon_path.is_file():
             raise SystemExit(f"branding source icon does not exist: {relative}")
         with Image.open(icon_path) as source:
             source.load()
-            if list(source.size) != expected_size:
+            if index == 0 and expected_size is not None and list(source.size) != expected_size:
                 raise SystemExit(f"{relative} is {source.size}, expected {tuple(expected_size)}")
             rgba = source.convert("RGBA")
             cache_key = hashlib.sha256(rgba.tobytes()).hexdigest()
