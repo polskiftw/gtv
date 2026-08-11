@@ -1,14 +1,20 @@
-function isPlainRecord(value) {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return false;
-  }
+type JsonRecord = Record<string, unknown>;
+type FunctionReplacer = (this: unknown, key: string, value: unknown) => unknown;
+type WhitelistReplacer = (string | number)[] | null;
+
+function isObjectRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isPlainRecord(value: unknown): value is JsonRecord {
+  if (!isObjectRecord(value)) return false;
 
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
 }
 
-function getOwnDataProperty(value, key) {
-  if (!isPlainRecord(value)) return null;
+function getOwnDataProperty(value: unknown, key: string): unknown {
+  if (!isObjectRecord(value)) return null;
 
   const descriptor = Object.getOwnPropertyDescriptor(value, key);
   if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) {
@@ -18,8 +24,13 @@ function getOwnDataProperty(value, key) {
   return descriptor.value;
 }
 
-function cloneRecordWithProperty(source, key, replacement, forceEnumerable) {
-  const clone = Object.create(Object.getPrototypeOf(source));
+function cloneRecordWithProperty(
+  source: JsonRecord,
+  key: string,
+  replacement: unknown,
+  forceEnumerable: boolean
+): JsonRecord {
+  const clone = Object.create(Object.getPrototypeOf(source)) as JsonRecord;
   const names = Object.getOwnPropertyNames(source);
   let replaced = false;
 
@@ -32,10 +43,9 @@ function cloneRecordWithProperty(source, key, replacement, forceEnumerable) {
         value: replacement,
         enumerable: forceEnumerable ? true : descriptor.enumerable,
         configurable: descriptor.configurable,
-        writable:
-          Object.prototype.hasOwnProperty.call(descriptor, 'writable')
-            ? descriptor.writable
-            : true
+        writable: Object.prototype.hasOwnProperty.call(descriptor, 'writable')
+          ? descriptor.writable
+          : true
       });
       replaced = true;
       return;
@@ -56,12 +66,10 @@ function cloneRecordWithProperty(source, key, replacement, forceEnumerable) {
   return clone;
 }
 
-function addInlineNoAdFlag(value) {
+function addInlineNoAdFlag(value: unknown): unknown {
   try {
-    if (!isPlainRecord(value)) return value;
-
     const playbackContext = getOwnDataProperty(value, 'playbackContext');
-    if (!isPlainRecord(playbackContext)) return value;
+    if (!isPlainRecord(playbackContext) || !isPlainRecord(value)) return value;
 
     const contentPlaybackContext = getOwnDataProperty(
       playbackContext,
@@ -97,13 +105,17 @@ function addInlineNoAdFlag(value) {
 
 const originalStringify = JSON.stringify;
 
-function stringify(value, replacer, space) {
+function stringify(
+  value: unknown,
+  replacer?: FunctionReplacer | WhitelistReplacer,
+  space?: string | number
+): string {
   const patchedValue = addInlineNoAdFlag(value);
   if (patchedValue !== value) {
     console.info('[JSON.stringify] Set isInlinePlaybackNoAd');
   }
 
-  return originalStringify(patchedValue, replacer, space);
+  return originalStringify(patchedValue, replacer as never, space);
 }
 
 JSON.stringify = stringify;
