@@ -31,6 +31,19 @@ for marker in required_markers:
     if marker not in upstream_shorts:
         raise SystemExit(f"upstream shorts.js no longer has expected marker: {marker}")
 
+json_stringify_path = source / "src" / "hooks" / "json-stringify.ts"
+upstream_json_stringify = json_stringify_path.read_text(encoding="utf-8")
+json_stringify_markers = (
+    "structuredClone(value)",
+    "contentPlaybackContext",
+    "isInlinePlaybackNoAd",
+)
+for marker in json_stringify_markers:
+    if marker not in upstream_json_stringify:
+        raise SystemExit(
+            f"upstream json-stringify.ts no longer has expected marker: {marker}"
+        )
+
 config_path = source / "src" / "config.js"
 config = config_path.read_text(encoding="utf-8")
 old_description = "desc: 'Remove Shorts from subscriptions'"
@@ -41,6 +54,7 @@ config_path.write_text(config.replace(old_description, new_description, 1), enco
 
 shutil.copy2(patches / "shorts.js", source / "src" / "shorts.js")
 shutil.copy2(patches / "shorts-filter.js", source / "src" / "shorts-filter.js")
+shutil.copy2(patches / "json-stringify.ts", json_stringify_path)
 
 package["version"] = version
 package_path.write_text(json.dumps(package, indent=2) + "\n", encoding="utf-8")
