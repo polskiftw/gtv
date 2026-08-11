@@ -1,0 +1,34 @@
+{
+  "slug": "youtube-adfree",
+  "kind": "upstream-patch",
+  "id": "youtube.leanback.v4",
+  "title": "YouTube AdFree",
+  "version": "0.5.4",
+  "shortDescription": "Ad-free YouTube with Shorts removed throughout the app.",
+  "description": "YouTube AdFree built from the current webosbrew upstream with a GTV patch that extends the existing Remove Shorts option across Home, Search, subscriptions, channel/browse shelves, pagination, and continuation responses. The filter uses YouTube TV renderer signatures rather than title text, preserving normal videos and non-Shorts shelves.",
+  "rootRequired": false,
+  "requirements": {},
+  "branding": {
+    "enabled": true,
+    "style": "dynamic-g-neon",
+    "placement": "bottom-right",
+    "scale": 0.416745,
+    "padding": 0.05,
+    "opacity": 0.788785,
+    "expectedSize": [
+      80,
+      80
+    ],
+    "sourceIcons": [
+      "assets/icon.png"
+    ]
+  },
+  "upstream": {
+    "repository": "https://github.com/webosbrew/youtube-webos.git",
+    "sourceUrl": "https://github.com/webosbrew/youtube-webos",
+    "commit": "f1b3b72926bb0cc312b5ceddc6a5b8c8ca081914",
+    "version": "0.5.3",
+    "license": "GPL-3.0",
+    "iconUri": "https://raw.githubusercontent.com/webosbrew/youtube-webos/f1b3b72926bb0cc312b5ceddc6a5b8c8ca081914/assets/icon.png"
+  }
+}

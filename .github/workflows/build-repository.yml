@@ -28,6 +28,11 @@ jobs:
           cache: pip
           cache-dependency-path: branding/requirements.txt
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Install branding dependencies
         run: python -m pip install --disable-pip-version-check -r branding/requirements.txt
 
@@ -41,6 +46,9 @@ jobs:
 
       - name: Test smart icon renderer
         run: python scripts/test-smart-icon.py
+
+      - name: Test YouTube Shorts filter
+        run: node apps/youtube-adfree/tests/test-shorts-filter.mjs apps/youtube-adfree/patches/shorts-filter.js
 
       - name: Build patched applications
         shell: bash
@@ -69,6 +77,30 @@ jobs:
           IPK=$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)
           test -n "$IPK"
           cp "$IPK" "$GITHUB_WORKSPACE/repo/packages/lg-app-update-blocker.ipk"
+
+          APP_DIR="$GITHUB_WORKSPACE/apps/youtube-adfree"
+          SRC="$RUNNER_TEMP/youtube-webos"
+          rm -rf "$SRC"
+
+          git clone https://github.com/webosbrew/youtube-webos.git "$SRC"
+          git -C "$SRC" checkout f1b3b72926bb0cc312b5ceddc6a5b8c8ca081914
+
+          python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
+          node "$APP_DIR/tests/test-shorts-filter.mjs" "$SRC/src/shorts-filter.js"
+          python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
+            --metadata "$APP_DIR/app.json" \
+            --source "$SRC" \
+            --repository-icon "$GITHUB_WORKSPACE/repo/icons/youtube-adfree.png"
+
+          cd "$SRC"
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm run package
+
+          IPK=$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)
+          test -n "$IPK"
+          cp "$IPK" "$GITHUB_WORKSPACE/repo/packages/youtube-adfree.ipk"
 
       - name: Generate Homebrew Channel feed
         run: python3 scripts/build-repository.py
