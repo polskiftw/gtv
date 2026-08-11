@@ -33,8 +33,8 @@ for marker in required_markers:
 
 config_path = source / "src" / "config.js"
 config = config_path.read_text(encoding="utf-8")
-old_description = "['removeShorts', { default: false, desc: 'Remove Shorts from subscriptions' }]"
-new_description = "['removeShorts', { default: false, desc: 'Remove Shorts everywhere' }]"
+old_description = "desc: 'Remove Shorts from subscriptions'"
+new_description = "desc: 'Remove Shorts everywhere'"
 if config.count(old_description) != 1:
     raise SystemExit("upstream removeShorts config entry changed; review patch before rebasing")
 config_path.write_text(config.replace(old_description, new_description, 1), encoding="utf-8")
