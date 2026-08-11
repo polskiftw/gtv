@@ -3,7 +3,11 @@
 (function () {
     'use strict';
 
-    const NAV_SELECTOR = 'button:not(:disabled), textarea:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]';
+    // Deliberately exclude text inputs and the theme toggle from D-pad navigation.
+    // On webOS, merely focusing a textarea can open the on-screen keyboard and trap
+    // arrow-key navigation. Text entry remains available through pointer-based focus.
+    const NAV_SELECTOR = 'button:not(:disabled):not(.theme-toggle)';
+    const PREFERRED_START_ID = 'refreshUpdateInfo';
 
     function visible(el) {
         const r = el.getBoundingClientRect();
@@ -20,14 +24,39 @@
         return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
 
+    function preferredStart() {
+        const el = document.getElementById(PREFERRED_START_ID);
+        return el && !el.disabled && visible(el) ? el : null;
+    }
+
+    function focusElement(el) {
+        if (!el) return;
+        el.focus();
+        el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+
+    function ensureFocus(forcePreferred) {
+        const items = candidates();
+        if (!items.length) return;
+
+        const preferred = preferredStart();
+        if (forcePreferred && preferred) {
+            focusElement(preferred);
+            return;
+        }
+
+        if (items.indexOf(document.activeElement) === -1) {
+            focusElement(preferred || items[0]);
+        }
+    }
+
     function move(direction) {
         const items = candidates();
         if (!items.length) return;
 
         let current = document.activeElement;
         if (items.indexOf(current) === -1) {
-            items[0].focus();
-            items[0].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            focusElement(preferredStart() || items[0]);
             return;
         }
 
@@ -65,15 +94,12 @@
     document.addEventListener('keydown', function (event) {
         const key = event.key || event.keyCode;
         const active = document.activeElement;
-        const typing = active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT');
 
         if ((key === 'Enter' || key === 13) && active && active.tagName === 'BUTTON' && !active.disabled) {
             event.preventDefault();
             active.click();
             return;
         }
-
-        if (typing) return;
 
         const map = {
             ArrowLeft: 'left', 37: 'left',
@@ -88,28 +114,29 @@
         move(direction);
     }, false);
 
-    function ensureFocus() {
-        const items = candidates();
-        if (items.length && items.indexOf(document.activeElement) === -1) {
-            items[0].focus();
-        }
-    }
-
     window.addEventListener('load', function () {
-        setTimeout(ensureFocus, 250);
-        setTimeout(ensureFocus, 1500);
+        // The service enables the real controls asynchronously. Prefer the top-left
+        // Refresh Status button once it becomes available instead of inheriting
+        // browser focus from the theme button or an input field.
+        setTimeout(function () { ensureFocus(true); }, 250);
+        setTimeout(function () { ensureFocus(true); }, 1500);
     });
 
     const observer = new MutationObserver(function (mutations) {
         for (let i = 0; i < mutations.length; i++) {
             if (mutations[i].attributeName === 'disabled') {
-                ensureFocus();
+                const target = mutations[i].target;
+                if (target && target.id === PREFERRED_START_ID && !target.disabled) {
+                    focusElement(target);
+                } else {
+                    ensureFocus(false);
+                }
                 break;
             }
         }
     });
 
-    document.querySelectorAll('button, textarea, input, select').forEach(function (el) {
+    document.querySelectorAll('button').forEach(function (el) {
         observer.observe(el, { attributes: true });
     });
 })();
