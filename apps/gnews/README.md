@@ -6,7 +6,7 @@ The application intentionally has no settings, source picker, guide, toolbar, or
 
 ## Sources
 
-- ABC uses ABC57's public WBND live HLS feed.
+- ABC uses ABC57's public WBND live HLS feed. ABC57 publishes this scheduled feed on its official live page; it can be off-air between live newscasts, in which case the app reaches the normal `Stream unavailable` state.
 - CBS uses the public WSBT live HLS feed published by Sinclair's Watch page.
 - NBC resolves the public WNDU 16 News Now channel through Zeam immediately before playback because that distributor issues short-lived HLS URLs.
 - ROAR uses Sinclair's public ROAR HLS feed; its `/TBD/` path is retained from the channel's former name.

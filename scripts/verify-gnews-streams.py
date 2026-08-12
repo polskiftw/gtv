@@ -14,6 +14,7 @@ SOURCES = {
     "CBS": "https://dai.google.com/linear/hls/event/kv2Ka1pgQUWzWHpBmOkQiA/master.m3u8",
     "ROAR": "https://fast-channels.sinclairstoryline.com/TBD/index.m3u8",
 }
+ABC_PUBLISHER_PAGE = "https://www.abc57.com/stream/live-stream"
 WNDU_RESOLVER = "https://zeam.com/api/services/StreamInfo?stationId=12772"
 
 
@@ -28,8 +29,10 @@ def fetch(url: str, limit: int = 512 * 1024, byte_range: bool = False) -> bytes:
         return response.read(limit)
 
 
-def verify_hls(label: str, url: str) -> None:
-    playlist = fetch(url).decode("utf-8", errors="replace")
+def verify_hls(label: str, url: str, playlist_bytes: bytes | None = None) -> None:
+    playlist = (playlist_bytes if playlist_bytes is not None else fetch(url)).decode(
+        "utf-8", errors="replace"
+    )
     if not playlist.lstrip().startswith("#EXTM3U"):
         raise RuntimeError(f"{label}: response is not an HLS playlist")
     if "#EXT-X-STREAM-INF" in playlist:
@@ -59,8 +62,27 @@ def verify_hls(label: str, url: str) -> None:
     print(f"{label}: public HLS playlist and media verified")
 
 
+def verify_abc() -> None:
+    """Verify ABC57 while allowing its published feed to be off-air between newscasts."""
+    url = SOURCES["ABC"]
+    publisher_page = fetch(ABC_PUBLISHER_PAGE).decode("utf-8", errors="replace")
+    if url not in publisher_page:
+        raise RuntimeError("ABC: ABC57 no longer publishes the configured HLS endpoint")
+    try:
+        playlist_bytes = fetch(url)
+    except urllib.error.HTTPError as error:
+        if error.code not in (404, 410):
+            raise
+        print("ABC: official HLS endpoint published; currently off-air")
+        return
+    verify_hls("ABC", url, playlist_bytes)
+
+
 def main() -> None:
+    verify_abc()
     for label, url in SOURCES.items():
+        if label == "ABC":
+            continue
         verify_hls(label, url)
     resolved = json.loads(fetch(WNDU_RESOLVER))
     stream_url = resolved.get("streamUrl")
@@ -72,5 +94,5 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, ValueError, urllib.error.URLError) as error:
+    except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
         raise SystemExit(f"gnews source verification failed: {error}") from error
