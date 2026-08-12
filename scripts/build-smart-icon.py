@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image
 
 from badge_finish import apply_badge_opacity
-from icon_sources import discover_launcher_icon_paths
+from icon_sources import cache_bust_launcher_icon_paths, discover_launcher_icon_paths
 from smart_badge import BadgeConfig, generate_branded_icon
 
 
@@ -35,6 +35,10 @@ def main() -> None:
         or not all(isinstance(path, str) and path for path in explicit_icon_paths)
     ):
         raise SystemExit("branding.sourceIcons must be a non-empty list of source-relative paths")
+
+    cache_bust_launcher_icons = branding.get("cacheBustLauncherIcons", False)
+    if not isinstance(cache_bust_launcher_icons, bool):
+        raise SystemExit("branding.cacheBustLauncherIcons must be a boolean when provided")
 
     icon_paths = discover_launcher_icon_paths(args.source.resolve(), explicit_icon_paths)
     if not icon_paths:
@@ -72,6 +76,12 @@ def main() -> None:
         output.save(icon_path, format="PNG", optimize=True)
         branded.append((icon_path, output, diagnostics))
         print(json.dumps({"icon": relative, **diagnostics}, sort_keys=True))
+
+    if cache_bust_launcher_icons:
+        rewritten = cache_bust_launcher_icon_paths(source_root, metadata["version"])
+        if not rewritten:
+            raise SystemExit("launcher icon cache busting requested, but appinfo.json declares no launcher icons")
+        print(json.dumps({"launcherIconPaths": rewritten}, sort_keys=True))
 
     args.repository_icon.parent.mkdir(parents=True, exist_ok=True)
     branded[0][1].save(args.repository_icon, format="PNG", optimize=True)

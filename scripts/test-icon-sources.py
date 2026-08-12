@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from icon_sources import discover_launcher_icon_paths
+from icon_sources import cache_bust_launcher_icon_paths, discover_launcher_icon_paths
 
 
 class LauncherIconDiscoveryTests(unittest.TestCase):
@@ -79,6 +79,60 @@ class LauncherIconDiscoveryTests(unittest.TestCase):
             )
 
             self.assertEqual(paths, ["assets/icon.png", "assets/largeIcon.png"])
+
+    def test_cache_bust_rewrites_launcher_paths_and_preserves_non_launcher_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            assets = source / "assets"
+            assets.mkdir()
+            (assets / "icon.png").write_bytes(b"branded-small")
+            (assets / "largeIcon.png").write_bytes(b"branded-large")
+            (assets / "playIcon.png").write_bytes(b"play")
+            appinfo_path = assets / "appinfo.json"
+            appinfo_path.write_text(
+                json.dumps(
+                    {
+                        "icon": "icon.png",
+                        "largeIcon": "largeIcon.png",
+                        "playIcon": "playIcon.png",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            rewritten = cache_bust_launcher_icon_paths(source, "1690.5.3")
+            appinfo = json.loads(appinfo_path.read_text(encoding="utf-8"))
+
+            self.assertEqual(
+                rewritten,
+                {
+                    "icon": "icon-gtv-1690-5-3.png",
+                    "largeIcon": "largeIcon-gtv-1690-5-3.png",
+                },
+            )
+            self.assertEqual(appinfo["icon"], "icon-gtv-1690-5-3.png")
+            self.assertEqual(appinfo["largeIcon"], "largeIcon-gtv-1690-5-3.png")
+            self.assertEqual(appinfo["playIcon"], "playIcon.png")
+            self.assertEqual((assets / appinfo["icon"]).read_bytes(), b"branded-small")
+            self.assertEqual((assets / appinfo["largeIcon"]).read_bytes(), b"branded-large")
+            self.assertEqual((assets / "icon.png").read_bytes(), b"branded-small")
+            self.assertEqual((assets / "largeIcon.png").read_bytes(), b"branded-large")
+
+    def test_cache_bust_root_manifest_points_to_assets_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            assets = source / "assets"
+            assets.mkdir()
+            (assets / "icon.png").write_bytes(b"branded")
+            appinfo_path = source / "appinfo.json"
+            appinfo_path.write_text(json.dumps({"icon": "icon.png"}), encoding="utf-8")
+
+            rewritten = cache_bust_launcher_icon_paths(source, "691.0.0")
+            appinfo = json.loads(appinfo_path.read_text(encoding="utf-8"))
+
+            self.assertEqual(rewritten, {"icon": "assets/icon-gtv-691-0-0.png"})
+            self.assertEqual(appinfo["icon"], "assets/icon-gtv-691-0-0.png")
+            self.assertEqual((source / appinfo["icon"]).read_bytes(), b"branded")
 
 
 if __name__ == "__main__":
