@@ -106,6 +106,8 @@ The branding pipeline discovers all launcher icon variants declared by the packa
 
 There is intentionally no blanket license covering every application in this repository.
 
-Each directory under `apps/` contains its own `LICENSE` file. Patched or derived applications preserve and comply with their upstream licenses. Original applications may use their own separately stated licenses, including non-commercial licenses where chosen.
+Every directory under `apps/` must contain a `LICENSE` file with the complete applicable license text stored locally in the repository. Link-only license stubs or files that merely say the license is available elsewhere are not accepted.
+
+Patched or derived applications preserve and comply with their upstream licenses, including the full license text and notices from the pinned upstream source. Original applications must likewise include the complete text of their chosen license in their own application directory.
 
 The `LICENSE` file inside an application directory is authoritative for that application.
