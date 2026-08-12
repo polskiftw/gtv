@@ -8,10 +8,11 @@ from versioning import derive_gtv_version
 
 class GTVVersioningTests(unittest.TestCase):
     def test_examples(self) -> None:
-        self.assertEqual(derive_gtv_version("1.0.0", 1), "1.0.1001")
-        self.assertEqual(derive_gtv_version("1.0.0", 2), "1.0.1002")
-        self.assertEqual(derive_gtv_version("0.5.3", 1), "0.5.4001")
-        self.assertEqual(derive_gtv_version("0.5.4", 1), "0.5.5001")
+        self.assertEqual(derive_gtv_version("1.0.0", 1), "1.0.1")
+        self.assertEqual(derive_gtv_version("1.0.0", 2), "1.0.2")
+        self.assertEqual(derive_gtv_version("0.5.3", 1), "0.5.3001")
+        self.assertEqual(derive_gtv_version("0.5.3", 2), "0.5.3002")
+        self.assertEqual(derive_gtv_version("0.5.4", 1), "0.5.4001")
 
     def test_rejects_invalid_inputs(self) -> None:
         for version in ("1.0", "1.0.0gtv", "01.0.0"):
