@@ -8,7 +8,8 @@ const core = require("../src/core.js");
 test("the channel grid and fixed source mapping are exact", () => {
   assert.deepEqual(core.CHANNELS.map((channel) => channel.id), ["abc", "cbs", "nbc", "roar"]);
   assert.equal(core.findChannel("abc").url, "https://video.abc57.com/live/wbnd/live2/live2.m3u8");
-  assert.equal(core.findChannel("cbs").url, "https://dai.google.com/linear/hls/event/kv2Ka1pgQUWzWHpBmOkQiA/master.m3u8");
+  assert.equal(core.findChannel("cbs").url, "https://d368mt9otn5oix.cloudfront.net/out/v1/a195f1f4df3e46d6a6a2cd33795896b1/index.m3u8");
+  assert.doesNotMatch(core.findChannel("cbs").url, /dai\.google\.com/);
   assert.equal(core.findChannel("nbc").url, "https://zeam.com/api/services/StreamInfo?stationId=12772");
   assert.equal(core.findChannel("roar").url, "https://fast-channels.sinclairstoryline.com/TBD/index.m3u8");
 });

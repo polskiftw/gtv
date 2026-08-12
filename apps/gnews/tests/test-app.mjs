@@ -136,7 +136,10 @@ test("remote navigation, playback, and Back preserve the selected tile", async (
   assert.equal(app.spinner.hidden, false);
 
   await new Promise((resolve) => setImmediate(resolve));
-  assert.match(app.video.src, /kv2Ka1pgQUWzWHpBmOkQiA/);
+  assert.equal(
+    app.video.src,
+    "https://d368mt9otn5oix.cloudfront.net/out/v1/a195f1f4df3e46d6a6a2cd33795896b1/index.m3u8"
+  );
   assert.equal(app.video.playCalls, 1);
   app.video.dispatch("playing");
   assert.equal(app.spinner.hidden, true);

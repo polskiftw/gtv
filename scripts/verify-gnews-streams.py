@@ -11,7 +11,7 @@ import urllib.request
 
 SOURCES = {
     "ABC": "https://video.abc57.com/live/wbnd/live2/live2.m3u8",
-    "CBS": "https://dai.google.com/linear/hls/event/kv2Ka1pgQUWzWHpBmOkQiA/master.m3u8",
+    "CBS": "https://d368mt9otn5oix.cloudfront.net/out/v1/a195f1f4df3e46d6a6a2cd33795896b1/index.m3u8",
     "ROAR": "https://fast-channels.sinclairstoryline.com/TBD/index.m3u8",
 }
 ABC_PUBLISHER_PAGE = "https://www.abc57.com/stream/live-stream"

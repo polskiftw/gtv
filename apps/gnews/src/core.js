@@ -25,7 +25,7 @@
     Object.freeze({
       id: "cbs",
       type: "hls",
-      url: "https://dai.google.com/linear/hls/event/kv2Ka1pgQUWzWHpBmOkQiA/master.m3u8",
+      url: "https://d368mt9otn5oix.cloudfront.net/out/v1/a195f1f4df3e46d6a6a2cd33795896b1/index.m3u8",
     }),
     Object.freeze({
       id: "nbc",
