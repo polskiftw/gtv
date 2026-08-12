@@ -1,6 +1,6 @@
 {
   "id": "youtube.leanback.v4",
-  "version": "0.5.3002",
+  "version": "690.5.3",
   "type": "web",
   "title": "YouTube AdFree",
   "appDescription": "YouTube AdFree built from the current webosbrew upstream with GTV patches that extend the existing Remove Shorts option across Home, Search, subscriptions, channel/browse shelves, pagination, and continuation responses; suppress inline playback promotion surfaces that can present QR-code and Shop overlays; and harden the inherited playback JSON hook so unrelated JSON.stringify calls retain native behavior and avoid unnecessary deep cloning. The Shorts filter uses YouTube TV renderer signatures rather than title text, preserving normal videos and non-Shorts shelves.",
@@ -9,7 +9,7 @@
   "rootRequired": false,
   "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
   "ipkHash": {
-    "sha256": "d9eaf9ede5c398ddcfbb57ecb607066c799f03f10dd784b18b899ad5ad8b2746"
+    "sha256": "0caab3ef5f4f656bddc7a94a98147b900a078a5e68737ff20bab45d013b6b5e9"
   },
-  "ipkSize": 493540
+  "ipkSize": 493564
 }
