@@ -55,6 +55,39 @@ try {
     'hook must not mutate caller-owned playback context'
   );
 
+  const explicitlyEnabled = Object.freeze({
+    playbackContext: Object.freeze({
+      contentPlaybackContext: Object.freeze({
+        signatureTimestamp: 321,
+        isInlinePlaybackNoAd: true
+      })
+    })
+  });
+  assert.equal(
+    JSON.stringify(explicitlyEnabled),
+    originalStringify(explicitlyEnabled),
+    'already-suppressed playback requests should serialize without cloning'
+  );
+
+  const explicitlyDisabledContext = Object.freeze({
+    signatureTimestamp: 654,
+    isInlinePlaybackNoAd: false
+  });
+  const explicitlyDisabled = Object.freeze({
+    playbackContext: Object.freeze({ contentPlaybackContext: explicitlyDisabledContext })
+  });
+  const suppressed = JSON.parse(JSON.stringify(explicitlyDisabled));
+  assert.equal(
+    suppressed.playbackContext.contentPlaybackContext.isInlinePlaybackNoAd,
+    true,
+    'playback requests must opt out of inline QR/shop promotion overlays'
+  );
+  assert.equal(
+    explicitlyDisabledContext.isInlinePlaybackNoAd,
+    false,
+    'overlay suppression must not mutate caller-owned playback context'
+  );
+
   const whitelistOutput = JSON.stringify(payload, [
     'playbackContext',
     'contentPlaybackContext',

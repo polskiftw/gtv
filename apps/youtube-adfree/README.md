@@ -6,7 +6,9 @@ GTV modification date: **2026-08-11**.
 
 The upstream application already provides ad blocking, SponsorBlock, quality controls, and a **Remove Shorts** setting. Upstream Shorts removal is scoped primarily to Subscription-tab renderer shapes. This patch keeps the existing setting and extends its behavior across YouTube TV content responses.
 
-## GTV modification
+## GTV modifications
+
+### Global Shorts removal
 
 When **Remove Shorts** is enabled, GTV removes entries that match current YouTube TV Shorts schemas:
 
@@ -20,9 +22,15 @@ Filtering is performed on parsed Innertube response objects before rendering. A 
 
 The patch also changes the setting description from “Remove Shorts from subscriptions” to “Remove Shorts everywhere.”
 
+### Inline playback overlay suppression
+
+GTV independently suppresses YouTube TV's inline playback promotion/ad surface by forcing `playbackContext.contentPlaybackContext.isInlinePlaybackNoAd` to `true` on playback requests. This prevents the inline playback surface used for QR-code and Shop overlays from being requested while leaving unrelated JSON serialization untouched.
+
+The hook uses copy-on-write cloning only for the playback-context chain, preserves the caller's original request object, respects JSON replacers, and skips cloning entirely when the request is already marked `isInlinePlaybackNoAd: true`.
+
 ## Building
 
-The repository workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the Shorts schema regression test, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK.
+The repository workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the Shorts schema and playback-hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK.
 
 The package keeps the upstream application ID, `youtube.leanback.v4`, so the official YouTube TV application must be uninstalled before installation, matching upstream requirements.
 

@@ -2,6 +2,8 @@ type JsonRecord = Record<string, unknown>;
 type FunctionReplacer = (this: unknown, key: string, value: unknown) => unknown;
 type WhitelistReplacer = (string | number)[] | null;
 
+const INLINE_PLAYBACK_NO_AD_KEY = 'isInlinePlaybackNoAd';
+
 function isObjectRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -66,7 +68,11 @@ function cloneRecordWithProperty(
   return clone;
 }
 
-function addInlineNoAdFlag(value: unknown): unknown {
+// Suppress YouTube TV's inline playback promotion/ad surface at the request
+// boundary. Those inline surfaces are where QR-code and Shop overlays are
+// delivered during video playback. Copy-on-write keeps caller-owned request
+// objects untouched and avoids a deep clone of unrelated JSON.stringify calls.
+function suppressInlinePlaybackOverlays(value: unknown): unknown {
   try {
     const playbackContext = getOwnDataProperty(value, 'playbackContext');
     if (!isPlainRecord(playbackContext) || !isPlainRecord(value)) return value;
@@ -77,9 +83,13 @@ function addInlineNoAdFlag(value: unknown): unknown {
     );
     if (!isPlainRecord(contentPlaybackContext)) return value;
 
+    if (getOwnDataProperty(contentPlaybackContext, INLINE_PLAYBACK_NO_AD_KEY) === true) {
+      return value;
+    }
+
     const patchedContentPlaybackContext = cloneRecordWithProperty(
       contentPlaybackContext,
-      'isInlinePlaybackNoAd',
+      INLINE_PLAYBACK_NO_AD_KEY,
       true,
       true
     );
@@ -110,9 +120,9 @@ function stringify(
   replacer?: FunctionReplacer | WhitelistReplacer,
   space?: string | number
 ): string {
-  const patchedValue = addInlineNoAdFlag(value);
+  const patchedValue = suppressInlinePlaybackOverlays(value);
   if (patchedValue !== value) {
-    console.info('[JSON.stringify] Set isInlinePlaybackNoAd');
+    console.info('[JSON.stringify] Suppressed inline playback overlays');
   }
 
   return originalStringify(patchedValue, replacer as never, space);
