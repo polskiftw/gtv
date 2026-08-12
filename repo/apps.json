@@ -15,7 +15,7 @@
       "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/gnews.json",
       "manifest": {
         "id": "com.gtv.gnews",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "type": "web",
         "title": "gnews",
         "appDescription": "A deliberately tiny TV-first launcher for ABC57, WSBT 22, WNDU 16 News Now, and ROAR. Use the remote arrows to choose a tile, press OK to watch, and press Back to return to the same tile.",
@@ -24,9 +24,9 @@
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/gnews.ipk",
         "ipkHash": {
-          "sha256": "2b61d093592f143241a8377cb7258922bae9b966aeb4a47a3238a6266eb25adb"
+          "sha256": "270cd01003ef26b9be0a101dadbb241656c6b392d7e92ef2a286921ad003a5ac"
         },
-        "ipkSize": 166536
+        "ipkSize": 166778
       },
       "pool": "main",
       "requirements": {
@@ -50,7 +50,7 @@
         "rootRequired": true,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "a5b3befe2a99ac3180b4c946efaf6fbd336eb03b115b78761432b825ef7420fe"
+          "sha256": "7c57fa882828b411f574e2aa888665c908e2df0c8cc93e6b376815154af2b1c0"
         },
         "ipkSize": 110420
       },
@@ -77,9 +77,9 @@
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "fb0ea0b57eadde99ad51cdab0e4f26c4b9bbd3ec076bb1f7266f2e38a345a9c3"
+          "sha256": "f02bdddb921d639bb6e3cd8ec1b4549d5efc482498b3c3d9895b3a13df3eb284"
         },
-        "ipkSize": 494646
+        "ipkSize": 494648
       },
       "pool": "main",
       "requirements": {},
