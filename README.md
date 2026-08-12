@@ -62,33 +62,39 @@ Release-note entries describe only functional differences from the pinned upstre
 
 ## Patched-app versioning
 
-webOS requires application versions to contain exactly three numeric components, and LG explicitly forbids leading zeroes inside those components. Suffixes such as `1.0.0gtv` and a literal installable version such as `1.0.0001` are therefore not valid webOS versions.
+Patched GTV builds use a deliberately simple webOS-safe package version. The upstream version remains directly visible in the numeric tail, while the package major carries a `69` marker and, only when needed, a GTV-only revision prefix.
 
-GTV conceptually uses `x.x.xyyy`: the upstream patch component is followed by a three-digit GTV revision. `gtvRevision` starts at `1` for each pinned upstream release. The installable third component is the numeric form of:
-
-```text
-upstream patch component + zero-padded three-digit GTV revision
-```
-
-Equivalently, the build calculates:
+A fresh GTV baseline is:
 
 ```text
-(upstream patch version * 1000) + gtvRevision
+69<upstream major>.<upstream minor>.<upstream patch>
 ```
 
 Examples:
 
 ```text
-upstream 1.0.0 + GTV revision 1 -> conceptual 1.0.0001 -> installable 1.0.1
-upstream 1.0.0 + GTV revision 2 -> conceptual 1.0.0002 -> installable 1.0.2
-upstream 0.5.3 + GTV revision 1 -> 0.5.3001
-upstream 0.5.3 + GTV revision 2 -> 0.5.3002
-upstream 0.5.4 + GTV revision 1 -> 0.5.4001
+upstream 1.0.0 -> 691.0.0
+upstream 0.5.3 -> 690.5.3
 ```
 
-This leaves 999 GTV revisions for each pinned upstream version and preserves numeric update ordering. The build derives the expected package version from `upstream.version` and `gtvRevision`; a mismatch fails instead of publishing an incorrectly versioned package.
+`gtvRevision` starts at `0`. It changes only when GTV adds or fixes downstream application behavior. Revision `0` has no extra prefix; revision `1` prepends `1`, revision `2` prepends `2`, and so on:
 
-`apps/<name>/app.json` remains the source of truth for the package metadata. The build applies its version before packaging, then validates it against the IPK control metadata, installed `appinfo.json`, installed `packageinfo.json`, generated manifest, and feed.
+```text
+upstream 1.0.0, GTV revision 0 -> 691.0.0
+upstream 1.0.0, GTV revision 1 -> 1691.0.0
+upstream 1.0.0, GTV revision 2 -> 2691.0.0
+```
+
+An upstream-only update does not change `gtvRevision`; only the upstream portion moves:
+
+```text
+691.0.0 -> 691.0.1
+1691.0.0 -> 1691.0.1
+```
+
+If GTV behavior and upstream both change in the same release, both portions move. The `69` marker itself is not a user-facing release label; Homebrew Channel release notes remain the human-facing record of what GTV added or fixed and which upstream version the package is based on.
+
+The build derives the expected package version from `upstream.version` and `gtvRevision`; a mismatch fails instead of publishing an incorrectly versioned package. `apps/<name>/app.json` remains the source of truth for package metadata. The build applies its version before packaging, then validates it against the IPK control metadata, installed `appinfo.json`, installed `packageinfo.json`, generated manifest, and feed.
 
 ## Patched-app branding
 
