@@ -3,7 +3,7 @@
   "kind": "original",
   "id": "com.gtv.gnews",
   "title": "gnews",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "shortDescription": "Four-button access to Michiana local news and ROAR.",
   "description": "A deliberately tiny TV-first launcher for ABC57, WSBT 22, WNDU 16 News Now, and ROAR. Use the remote arrows to choose a tile, press OK to watch, and press Back to return to the same tile.",
   "rootRequired": false,

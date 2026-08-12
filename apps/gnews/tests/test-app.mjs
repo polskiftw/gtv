@@ -71,7 +71,7 @@ class Element {
   }
 }
 
-function createHarness() {
+function createHarness(options = {}) {
   const document = { activeElement: null };
   const tiles = ["abc", "cbs", "nbc", "roar"].map(
     (channel) => new Element(document, { "data-channel": channel })
@@ -98,9 +98,25 @@ function createHarness() {
   document.getElementById = (id) => byId[id];
 
   const windowListeners = new Map();
+  const xhrRequests = [];
+  class FakeXMLHttpRequest {
+    open(method, url) {
+      this.method = method;
+      this.url = url;
+    }
+
+    send() {
+      xhrRequests.push(this);
+      setImmediate(() => {
+        this.status = options.xhrStatus ?? 200;
+        this.responseText = JSON.stringify(options.xhrBody ?? {});
+        this.onload();
+      });
+    }
+  }
   const window = {
     GNewsCore: core,
-    fetch: async () => ({ ok: true, json: async () => ({}) }),
+    XMLHttpRequest: FakeXMLHttpRequest,
     setTimeout,
     clearTimeout,
     closeCalls: 0,
@@ -120,7 +136,7 @@ function createHarness() {
     return { prevented, stopped };
   }
 
-  return { document, tiles, grid, playback, spinner, error, video, window, key };
+  return { document, tiles, grid, playback, spinner, error, video, window, xhrRequests, key };
 }
 
 test("remote navigation, playback, and Back preserve the selected tile", async () => {
@@ -162,4 +178,27 @@ test("a media error produces the exact minimal failure state", async () => {
   assert.equal(app.spinner.hidden, true);
   assert.equal(app.error.hidden, false);
   assert.equal(app.playback.classList.contains("is-playing"), false);
+});
+
+test("WNDU resolves its short-lived stream with XMLHttpRequest", async () => {
+  const streamUrl = "https://example.test/signed/wn-du/master.m3u8?token=short-lived";
+  const app = createHarness({ xhrBody: { streamUrl } });
+  app.key(core.KEYS.DOWN);
+  app.key(core.KEYS.ENTER);
+
+  await new Promise((resolve) => setImmediate(resolve));
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(app.xhrRequests.length, 1);
+  assert.equal(app.xhrRequests[0].method, "GET");
+  assert.equal(
+    app.xhrRequests[0].url,
+    "https://zeam.com/api/services/StreamInfo?stationId=12772"
+  );
+  assert.equal(app.xhrRequests[0].timeout, 10000);
+  assert.equal(app.video.src, streamUrl);
+  assert.equal(app.video.playCalls, 1);
+
+  app.video.dispatch("playing");
+  app.key(core.KEYS.BACK);
 });

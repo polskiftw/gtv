@@ -59,6 +59,29 @@
     }, 0);
   }
 
+  function xhrFetch(url) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new window.XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.timeout = 10000;
+      xhr.onload = function () {
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          json: function () {
+            return Promise.resolve(JSON.parse(xhr.responseText));
+          },
+        });
+      };
+      xhr.onerror = function () {
+        reject(new Error("Network request failed"));
+      };
+      xhr.ontimeout = function () {
+        reject(new Error("Network request timed out"));
+      };
+      xhr.send();
+    });
+  }
+
   function beginPlayback(index) {
     var tile = tiles[index];
     var channel = core.findChannel(tile.getAttribute("data-channel"));
@@ -75,7 +98,7 @@
       showUnavailable(activeSession);
     }, 25000);
 
-    core.resolveChannel(channel, window.fetch.bind(window), { timeoutMs: 10000 }).then(
+    core.resolveChannel(channel, xhrFetch, { timeoutMs: 10000 }).then(
       function (streamUrl) {
         if (activeSession !== session || playback.hidden) return;
         video.src = streamUrl;

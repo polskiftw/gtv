@@ -20,7 +20,7 @@ def main() -> None:
     assert appinfo["resolution"] == "1920x1080"
     assert appinfo["disableBackHistoryAPI"] is True
     assert appinfo["vendorExtensions"]["allowCrossDomain"] is True
-    assert "vendorExtension" not in appinfo
+    assert appinfo["vendorExtension"]["allowCrossDomain"] is True
     assert appinfo["trustLevel"] == "netcast"
 
     html = (SRC / "index.html").read_text(encoding="utf-8")
