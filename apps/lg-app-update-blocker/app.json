@@ -3,9 +3,18 @@
   "kind": "upstream-patch",
   "id": "org.webosbrew.appupdateblocker",
   "title": "LG App Update Blocker",
-  "version": "1.0.7",
+  "version": "1.0.1001",
+  "gtvRevision": 1,
   "shortDescription": "LG update blocker with TV remote navigation.",
   "description": "LG App Update Blocker with 5-way remote navigation, visible focus, OK-button support, deterministic startup focus, and safe exclusion of text-entry fields from D-pad navigation.",
+  "changes": {
+    "added": [
+      "Five-way TV remote navigation with visible focus and OK-button support."
+    ],
+    "fixed": [
+      "Launcher branding across every webOS Home screen icon size."
+    ]
+  },
   "rootRequired": true,
   "requirements": {
     "webosRelease": ">=5.0"
@@ -27,6 +36,7 @@
     ]
   },
   "upstream": {
+    "name": "LG App Update Blocker",
     "repository": "https://github.com/dr0dr1dr2dr3/lgappupdateblocker.git",
     "sourceUrl": "https://github.com/dr0dr1dr2dr3/lgappupdateblocker",
     "commit": "9e48b292ce8fc7e776feb85763314e66c2061d02",

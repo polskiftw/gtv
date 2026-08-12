@@ -21,6 +21,7 @@ gtv/
 │  └─ ...
 ├─ repo/
 │  ├─ apps.json            # generated Homebrew Channel feed
+│  ├─ descriptions/        # generated patched-app details/release notes
 │  ├─ icons/               # generated branded HBC icons
 │  ├─ manifests/           # generated per-app manifests
 │  └─ packages/            # generated IPKs
@@ -41,13 +42,50 @@ The contents of `repo/` are generated from the applications under `apps/`. The g
 
 Generated repository files are build outputs. Application source, patch files, metadata, licensing, and attribution live under `apps/`.
 
+## Patched-app release notes
+
+Every patched upstream application must define structured `changes` metadata and upstream identity in its `app.json`. The repository build turns that metadata into the full description shown on the Homebrew Channel install/update screen.
+
+The standard presentation is intentionally brief:
+
+```text
+Added <change>
+
+Fixed <change>
+
+Based on <upstream app name> <upstream version>
+```
+
+`Based on ...` links to the original upstream repository. The version on that line is always the actual pinned upstream application version, not GTV's package version. If more than one added or fixed change is relevant, each is emitted as its own `Added ...` or `Fixed ...` line.
+
+## Patched-app versioning
+
+webOS requires application versions to contain exactly three numeric components, so suffixes such as `1.0.0gtv` are not valid installable versions. GTV therefore encodes the same idea numerically while keeping the human-facing upstream version explicit in Homebrew Channel.
+
+For patched apps, `gtvRevision` starts at `1` for each pinned upstream release. The installable third component is calculated as:
+
+```text
+(upstream patch version + 1) * 1000 + gtvRevision
+```
+
+Examples:
+
+```text
+upstream 1.0.0 + GTV revision 1 -> 1.0.1001
+upstream 1.0.0 + GTV revision 2 -> 1.0.1002
+upstream 0.5.3 + GTV revision 1 -> 0.5.4001
+upstream 0.5.4 + GTV revision 1 -> 0.5.5001
+```
+
+This leaves 999 GTV revisions for each pinned upstream version and preserves numeric update ordering. The build derives the expected package version from `upstream.version` and `gtvRevision`; a mismatch fails instead of publishing an incorrectly versioned package.
+
+`apps/<name>/app.json` remains the source of truth for the package metadata. The build applies its version before packaging, then validates it against the IPK control metadata, installed `appinfo.json`, installed `packageinfo.json`, generated manifest, and feed.
+
 ## Patched-app branding
 
 Patched applications retain their upstream icons but receive a generated lowercase neon `g` in the Pricedown Black GTA logo typeface in both the installed package and Homebrew Channel listing. Its color is not selected from a fixed palette: the build analyzes the exact source pixels underneath the glyph, optimizes a continuous OKLab color field for local contrast, regularizes neighboring colors into a coherent sign, and renders a colored tube and bloom at high resolution.
 
-Per-app placement, scale, padding, expected dimensions, and source icon paths live in the application's `branding` metadata. The implementation and metadata contract are documented in [`branding/README.md`](branding/README.md).
-
-`apps/<name>/app.json` is the sole authority for a patched package version. The build applies that version before packaging, then validates it against the IPK control metadata, installed `appinfo.json`, installed `packageinfo.json`, generated manifest, and feed. A mismatch fails CI rather than publishing drifted metadata.
+The branding pipeline discovers all launcher icon variants declared by the packaged webOS app so Homebrew Channel and the webOS Home screen use consistent GTV branding. Per-app placement, scale, padding, expected dimensions, and canonical source icon paths live in the application's `branding` metadata. The implementation and metadata contract are documented in [`branding/README.md`](branding/README.md).
 
 ## Licensing
 
