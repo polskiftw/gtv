@@ -9,7 +9,7 @@
   "rootRequired": false,
   "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
   "ipkHash": {
-    "sha256": "20f546efafef63346e96d345a997fdb96d7173a753648899739ad8b3b818c015"
+    "sha256": "fb0ea0b57eadde99ad51cdab0e4f26c4b9bbd3ec076bb1f7266f2e38a345a9c3"
   },
-  "ipkSize": 494622
+  "ipkSize": 494646
 }
