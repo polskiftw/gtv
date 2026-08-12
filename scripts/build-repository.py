@@ -29,12 +29,17 @@ def build_patch_description(metadata: dict[str, object]) -> str:
         raise SystemExit(f"{metadata['slug']}: patched apps require changes and upstream metadata")
 
     lines: list[str] = []
+    change_count = 0
     for key, label in (("added", "Added"), ("fixed", "Fixed")):
         items = changes.get(key, [])
-        if not isinstance(items, list) or not items or not all(isinstance(item, str) and item.strip() for item in items):
-            raise SystemExit(f"{metadata['slug']}: changes.{key} must be a non-empty string list")
+        if not isinstance(items, list) or not all(isinstance(item, str) and item.strip() for item in items):
+            raise SystemExit(f"{metadata['slug']}: changes.{key} must be a string list")
         for item in items:
             lines.append(f"<p><strong>{label}</strong> {html.escape(item.strip())}</p>")
+            change_count += 1
+
+    if change_count == 0:
+        raise SystemExit(f"{metadata['slug']}: patched apps require at least one functional change")
 
     upstream_name = upstream.get("name")
     upstream_version = upstream.get("version")
