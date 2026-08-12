@@ -24,7 +24,7 @@
         "rootRequired": true,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "dd0a50da658820443c6878134736aada70af67da8722dbb04e558812eca93c63"
+          "sha256": "48ca30e5d2d19817c884e579e4d26e260a0807e8f3454f6e15c42fda934c86d8"
         },
         "ipkSize": 110420
       },
@@ -51,7 +51,7 @@
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "8c827128051715af41e8b18e455707918fcf3bcc5f659f10e46427b6a5a2219c"
+          "sha256": "d618f61ffbe8c406ad6f92b737a18f4313234c73d29826897d90f3e8aa271b94"
         },
         "ipkSize": 494288
       },
