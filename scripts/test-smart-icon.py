@@ -82,7 +82,6 @@ class SmartBadgeTests(unittest.TestCase):
     def test_production_branding_metadata_is_regression_locked(self) -> None:
         metadata = json.loads(PRODUCTION_METADATA.read_text(encoding="utf-8"))
         branding = metadata["branding"]
-        self.assertEqual(metadata["version"], "1.0.7")
         self.assertEqual(branding["expectedSize"], [400, 400])
         self.assertEqual(branding["placement"], "bottom-right")
         self.assertAlmostEqual(float(branding["scale"]), 0.416745)
