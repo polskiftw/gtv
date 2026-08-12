@@ -12,7 +12,7 @@
       "Shorts removal throughout Home, Search, subscriptions, channel and browse shelves, pagination, and continuation results."
     ],
     "fixed": [
-      "Launcher branding across every webOS Home screen icon size."
+      "The playback JSON hook so unrelated JSON.stringify calls keep native behavior and avoid unnecessary deep cloning."
     ]
   },
   "rootRequired": false,
