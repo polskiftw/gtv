@@ -1,13 +1,39 @@
 {
   "paging": {
     "page": 1,
-    "count": 2,
+    "count": 3,
     "maxPage": 1,
-    "itemsTotal": 2,
+    "itemsTotal": 3,
     "prevUrl": null,
     "nextUrl": null
   },
   "packages": [
+    {
+      "id": "com.gtv.gnews",
+      "title": "gnews",
+      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/gnews.png",
+      "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/gnews.json",
+      "manifest": {
+        "id": "com.gtv.gnews",
+        "version": "1.0.0",
+        "type": "web",
+        "title": "gnews",
+        "appDescription": "A deliberately tiny TV-first launcher for ABC57, WSBT 22, WNDU 16 News Now, and ROAR. Use the remote arrows to choose a tile, press OK to watch, and press Back to return to the same tile.",
+        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/gnews.png",
+        "sourceUrl": "https://github.com/polskiftw/gtv/tree/main/apps/gnews",
+        "rootRequired": false,
+        "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/gnews.ipk",
+        "ipkHash": {
+          "sha256": "22137b06c63b23669e8881837553a30b4f4ab67b5990a1d90b031475b177ee58"
+        },
+        "ipkSize": 166520
+      },
+      "pool": "main",
+      "requirements": {
+        "webosRelease": ">=5.0"
+      },
+      "shortDescription": "Four-button access to Michiana local news and ROAR."
+    },
     {
       "id": "org.webosbrew.appupdateblocker",
       "title": "LG App Update Blocker",
@@ -24,9 +50,9 @@
         "rootRequired": true,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "678c8cb2e80ce5d5c93a024b56dd1bfcff1de22f2cb8096aeafdf051271da165"
+          "sha256": "51bc903efa5eda341e6be26588f9f507715fedb6f82122f6318d307e8973c771"
         },
-        "ipkSize": 110420
+        "ipkSize": 110410
       },
       "pool": "main",
       "requirements": {
@@ -51,9 +77,9 @@
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "937b09cf7d7f953f322dcd0d83a969ba5d583ba7ed43a1ab5baf552ea2592343"
+          "sha256": "20f546efafef63346e96d345a997fdb96d7173a753648899739ad8b3b818c015"
         },
-        "ipkSize": 494650
+        "ipkSize": 494622
       },
       "pool": "main",
       "requirements": {},
