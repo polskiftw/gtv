@@ -68,11 +68,10 @@ function cloneRecordWithProperty(
   return clone;
 }
 
-// Suppress YouTube TV's inline playback promotion/ad surface at the request
-// boundary. Those inline surfaces are where QR-code and Shop overlays are
-// delivered during video playback. Copy-on-write keeps caller-owned request
-// objects untouched and avoids a deep clone of unrelated JSON.stringify calls.
-function suppressInlinePlaybackOverlays(value: unknown): unknown {
+// Preserve upstream's request-side isInlinePlaybackNoAd behavior without its
+// broad structuredClone of every non-primitive JSON.stringify input. The
+// actual QR/Shop response filtering lives in playback-overlay-filter.js.
+function ensureInlinePlaybackNoAd(value: unknown): unknown {
   try {
     const playbackContext = getOwnDataProperty(value, 'playbackContext');
     if (!isPlainRecord(playbackContext) || !isPlainRecord(value)) return value;
@@ -120,9 +119,9 @@ function stringify(
   replacer?: FunctionReplacer | WhitelistReplacer,
   space?: string | number
 ): string {
-  const patchedValue = suppressInlinePlaybackOverlays(value);
+  const patchedValue = ensureInlinePlaybackNoAd(value);
   if (patchedValue !== value) {
-    console.info('[JSON.stringify] Suppressed inline playback overlays');
+    console.info('[JSON.stringify] Applied inline playback no-ad flag');
   }
 
   return originalStringify(patchedValue, replacer as never, space);

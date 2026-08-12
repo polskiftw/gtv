@@ -22,15 +22,23 @@ Filtering is performed on parsed Innertube response objects before rendering. A 
 
 The patch also changes the setting description from “Remove Shorts from subscriptions” to “Remove Shorts everywhere.”
 
-### Inline playback overlay suppression
+### Sponsored playback overlay suppression
 
-GTV independently suppresses YouTube TV's inline playback promotion/ad surface by forcing `playbackContext.contentPlaybackContext.isInlinePlaybackNoAd` to `true` on playback requests. This prevents the inline playback surface used for QR-code and Shop overlays from being requested while leaving unrelated JSON serialization untouched.
+Upstream 0.5.3 already sets `playbackContext.contentPlaybackContext.isInlinePlaybackNoAd` on playback requests, so GTV does not treat that request flag as the QR/Shop filter.
 
-The hook uses copy-on-write cloning only for the playback-context chain, preserves the caller's original request object, respects JSON replacers, and skips cloning entirely when the request is already marked `isInlinePlaybackNoAd: true`.
+When the existing **AdBlock** setting is enabled, GTV additionally filters parsed player responses and removes `playerOverlays.playerOverlayRenderer.timelyActionRenderers`, the timed playback-overlay collection used for sponsored QR-code and Shop prompts. The filter handles both the normal top-level player response and the known `playerResponse` wrapper. It intentionally does not recursively search arbitrary response objects, and it leaves sibling player-overlay data untouched.
+
+There is no separate GTV setting for this behavior; it is part of the existing AdBlock path.
+
+### Playback JSON hook hardening
+
+Upstream's playback hook deep-clones every non-primitive value passed to `JSON.stringify` before applying `isInlinePlaybackNoAd`. GTV preserves the same request-side flag behavior but narrows the hook to the exact playback-context chain, uses copy-on-write cloning only when the flag needs to change, leaves caller-owned objects untouched, preserves replacer behavior, and avoids cloning unrelated JSON serialization entirely.
+
+This hook is independent of the QR/Shop response filter above.
 
 ## Building
 
-The repository workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the Shorts schema and playback-hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK.
+The repository workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the Shorts, sponsored-overlay, and playback-hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK.
 
 The package keeps the upstream application ID, `youtube.leanback.v4`, so the official YouTube TV application must be uninstalled before installation, matching upstream requirements.
 

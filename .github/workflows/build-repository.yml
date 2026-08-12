@@ -56,6 +56,9 @@ jobs:
       - name: Test YouTube Shorts filter
         run: node apps/youtube-adfree/tests/test-shorts-filter.mjs apps/youtube-adfree/patches/shorts-filter.js
 
+      - name: Test YouTube sponsored playback overlay filter
+        run: node apps/youtube-adfree/tests/test-playback-overlay-filter.mjs apps/youtube-adfree/patches/playback-overlay-filter.js
+
       - name: Test YouTube JSON stringify hook
         run: node --experimental-strip-types apps/youtube-adfree/tests/test-json-stringify-hook.mjs apps/youtube-adfree/patches/json-stringify.ts
 
@@ -96,6 +99,7 @@ jobs:
 
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
           node "$APP_DIR/tests/test-shorts-filter.mjs" "$SRC/src/shorts-filter.js"
+          node "$APP_DIR/tests/test-playback-overlay-filter.mjs" "$SRC/src/playback-overlay-filter.js"
           node --experimental-strip-types "$APP_DIR/tests/test-json-stringify-hook.mjs" "$SRC/src/hooks/json-stringify.ts"
           python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
             --metadata "$APP_DIR/app.json" \

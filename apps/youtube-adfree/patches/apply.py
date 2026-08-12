@@ -44,6 +44,29 @@ for marker in json_stringify_markers:
             f"upstream json-stringify.ts no longer has expected marker: {marker}"
         )
 
+adblock_path = source / "src" / "adblock.js"
+adblock = adblock_path.read_text(encoding="utf-8")
+adblock_import = "import { configRead } from './config';\n"
+adblock_guard = "  if (!configRead('enableAdBlock')) {\n    return r;\n  }\n\n"
+if adblock.count(adblock_import) != 1 or adblock.count(adblock_guard) != 1:
+    raise SystemExit("upstream adblock.js changed; review playback-overlay patch before rebasing")
+
+adblock = adblock.replace(
+    adblock_import,
+    adblock_import + "import { removeSponsoredPlaybackOverlays } from './playback-overlay-filter';\n",
+    1,
+)
+adblock = adblock.replace(
+    adblock_guard,
+    adblock_guard
+    + "  const removedPlaybackOverlays = removeSponsoredPlaybackOverlays(r);\n"
+    + "  if (removedPlaybackOverlays) {\n"
+    + "    console.info('[adblock] Removed sponsored playback overlays');\n"
+    + "  }\n\n",
+    1,
+)
+adblock_path.write_text(adblock, encoding="utf-8")
+
 config_path = source / "src" / "config.js"
 config = config_path.read_text(encoding="utf-8")
 old_description = "desc: 'Remove Shorts from subscriptions'"
@@ -54,6 +77,7 @@ config_path.write_text(config.replace(old_description, new_description, 1), enco
 
 shutil.copy2(patches / "shorts.js", source / "src" / "shorts.js")
 shutil.copy2(patches / "shorts-filter.js", source / "src" / "shorts-filter.js")
+shutil.copy2(patches / "playback-overlay-filter.js", source / "src" / "playback-overlay-filter.js")
 shutil.copy2(patches / "json-stringify.ts", json_stringify_path)
 
 package["version"] = version
