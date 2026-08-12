@@ -60,7 +60,8 @@ for metadata_path in sorted(APPS.glob("*/app.json")):
     if not ipk.exists():
         raise SystemExit(f"missing built package: {ipk.relative_to(ROOT)}")
 
-    if metadata.get("kind") == "upstream-patch":
+    kind = metadata.get("kind")
+    if kind == "upstream-patch":
         expected_version = derive_gtv_version(metadata["upstream"]["version"], metadata["gtvRevision"])
         if metadata["version"] != expected_version:
             raise SystemExit(
@@ -69,17 +70,31 @@ for metadata_path in sorted(APPS.glob("*/app.json")):
         description_path = DESCRIPTIONS / f"{slug}.html"
         description_path.write_text(build_patch_description(metadata), encoding="utf-8")
         full_description_url = f"{RAW_BASE}/descriptions/{slug}.html"
-    else:
-        full_description_url = None
-
-    branding = metadata.get("branding", {})
-    if branding.get("enabled", metadata.get("kind") == "upstream-patch"):
+    elif kind == "original":
+        if metadata.get("branding", {}).get("enabled"):
+            raise SystemExit(f"{slug}: original apps must not use patched-app branding")
+        if not isinstance(metadata.get("sourceUrl"), str) or not metadata["sourceUrl"].strip():
+            raise SystemExit(f"{slug}: original apps require sourceUrl")
         icon = ICONS / f"{slug}.png"
         if not icon.is_file() or icon.stat().st_size == 0:
-            raise SystemExit(f"missing generated branded icon: {icon.relative_to(ROOT)}")
+            raise SystemExit(f"missing original app icon: {icon.relative_to(ROOT)}")
         icon_uri = f"{RAW_BASE}/icons/{slug}.png"
+        full_description_url = None
     else:
-        icon_uri = metadata["upstream"]["iconUri"]
+        raise SystemExit(f"{slug}: unsupported app kind {kind!r}")
+
+    if kind == "upstream-patch":
+        branding = metadata.get("branding", {})
+        if branding.get("enabled", True):
+            icon = ICONS / f"{slug}.png"
+            if not icon.is_file() or icon.stat().st_size == 0:
+                raise SystemExit(f"missing generated branded icon: {icon.relative_to(ROOT)}")
+            icon_uri = f"{RAW_BASE}/icons/{slug}.png"
+        else:
+            icon_uri = metadata["upstream"]["iconUri"]
+
+    if kind != "upstream-patch":
+        full_description_url = None
 
     digest = hashlib.sha256(ipk.read_bytes()).hexdigest()
     manifest = {
@@ -89,7 +104,7 @@ for metadata_path in sorted(APPS.glob("*/app.json")):
         "title": metadata["title"],
         "appDescription": metadata["description"],
         "iconUri": icon_uri,
-        "sourceUrl": metadata["upstream"]["sourceUrl"],
+        "sourceUrl": metadata["upstream"]["sourceUrl"] if kind == "upstream-patch" else metadata["sourceUrl"],
         "rootRequired": metadata["rootRequired"],
         "ipkUrl": f"{RAW_BASE}/packages/{slug}.ipk",
         "ipkHash": {"sha256": digest},

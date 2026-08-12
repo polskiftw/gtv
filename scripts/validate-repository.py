@@ -119,9 +119,37 @@ def validate_app(metadata_path: Path, feed_package: dict[str, object]) -> None:
     if control.get("Package") != app_id or appinfo.get("id") != app_id or packageinfo.get("id") != app_id:
         fail(f"{slug}: package identifiers do not match app.json")
 
+    kind = metadata.get("kind")
     branding = metadata.get("branding", {})
-    branding_enabled = branding.get("enabled", metadata.get("kind") == "upstream-patch")
-    if branding_enabled:
+    branding_enabled = branding.get("enabled", kind == "upstream-patch")
+    if kind == "original":
+        if branding_enabled:
+            fail(f"{slug}: original app unexpectedly enables patched-app branding")
+        icon_metadata = metadata.get("icon")
+        if not isinstance(icon_metadata, dict):
+            fail(f"{slug}: original app icon metadata is missing")
+        expected_size_value = icon_metadata.get("expectedSize")
+        source_path_value = icon_metadata.get("sourcePath")
+        if not isinstance(expected_size_value, list) or len(expected_size_value) != 2:
+            fail(f"{slug}: icon.expectedSize is required")
+        if not isinstance(source_path_value, str) or not source_path_value:
+            fail(f"{slug}: icon.sourcePath is required")
+        expected_size = (int(expected_size_value[0]), int(expected_size_value[1]))
+        source_icon_path = metadata_path.parent / source_path_value
+        repository_icon_path = REPO / "icons" / f"{slug}.png"
+        expected_uri = f"{RAW_BASE}/icons/{slug}.png"
+        if manifest.get("iconUri") != expected_uri or feed_package.get("iconUri") != expected_uri:
+            fail(f"{slug}: feed/manifest does not reference the original app icon")
+        source_icon = image_array(source_icon_path.read_bytes(), f"source icon for {slug}", expected_size)
+        repository_icon = image_array(repository_icon_path.read_bytes(), f"repo icon for {slug}", expected_size)
+        packaged_icon_name = appinfo.get("icon")
+        if not isinstance(packaged_icon_name, str) or not packaged_icon_name:
+            fail(f"{slug}: appinfo.json has no icon")
+        packaged_icon_data = read_tar_member(ar["data.tar.gz"], f"/applications/{app_id}/{packaged_icon_name}")
+        packaged_icon = image_array(packaged_icon_data, f"packaged icon for {slug}", expected_size)
+        if not np.array_equal(source_icon, repository_icon) or not np.array_equal(source_icon, packaged_icon):
+            fail(f"{slug}: source, packaged, and repository icons are not identical")
+    elif branding_enabled:
         expected_size_value = branding.get("expectedSize")
         if not isinstance(expected_size_value, list) or len(expected_size_value) != 2:
             fail(f"{slug}: branding.expectedSize is required")
@@ -142,10 +170,12 @@ def validate_app(metadata_path: Path, feed_package: dict[str, object]) -> None:
         packaged_icon = image_array(packaged_icon_data, f"packaged icon for {slug}", expected_size)
         if not np.array_equal(repository_icon, packaged_icon):
             fail(f"{slug}: packaged app icon and HBC icon are not identical")
-    else:
+    elif kind == "upstream-patch":
         expected_uri = metadata["upstream"]["iconUri"]
         if manifest.get("iconUri") != expected_uri or feed_package.get("iconUri") != expected_uri:
             fail(f"{slug}: unbranded icon URL differs from app metadata")
+    else:
+        fail(f"{slug}: unsupported app kind {kind!r}")
 
     print(f"validated {slug} {version}: feed, manifest, package, version, and icon are consistent")
 

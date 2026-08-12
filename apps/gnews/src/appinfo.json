@@ -1,0 +1,19 @@
+{
+  "id": "com.gtv.gnews",
+  "version": "1.0.0",
+  "vendor": "GTV",
+  "type": "web",
+  "main": "index.html",
+  "title": "gnews",
+  "icon": "assets/icon.png",
+  "largeIcon": "assets/icon.png",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "requiredPermissions": [
+    "internet"
+  ],
+  "vendorExtension": {
+    "allowCrossDomain": true
+  },
+  "trustLevel": "netcast"
+}

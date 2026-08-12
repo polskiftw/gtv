@@ -4,6 +4,8 @@ webOS homebrew apps.
 
 `gtv` is a monorepo for webOS homebrew applications, including original projects and maintained patches of existing software. Each application is self-contained and carries its own licensing and attribution.
 
+Current applications include `gnews`, an original four-channel Michiana live-TV launcher, alongside maintained GTV patches of LG App Update Blocker and YouTube AdFree.
+
 ## Repository layout
 
 ```text
