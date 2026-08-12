@@ -9,7 +9,7 @@
   "rootRequired": true,
   "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
   "ipkHash": {
-    "sha256": "9526818b8b1154cb8c235cb953e4f25e7747a438cf1afe2b2a4f271d7f342bce"
+    "sha256": "dd0a50da658820443c6878134736aada70af67da8722dbb04e558812eca93c63"
   },
   "ipkSize": 110420
 }
