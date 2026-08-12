@@ -11,9 +11,7 @@
     "added": [
       "Five-way TV remote navigation with visible focus and OK-button support."
     ],
-    "fixed": [
-      "Launcher branding across every webOS Home screen icon size."
-    ]
+    "fixed": []
   },
   "rootRequired": true,
   "requirements": {
