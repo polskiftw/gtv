@@ -73,6 +73,7 @@ jobs:
 
           git clone https://github.com/dr0dr1dr2dr3/lgappupdateblocker.git "$SRC"
           git -C "$SRC" checkout 9e48b292ce8fc7e776feb85763314e66c2061d02
+          cp "$SRC/LICENSE" "$APP_DIR/LICENSE"
 
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
           python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
@@ -96,6 +97,7 @@ jobs:
 
           git clone https://github.com/webosbrew/youtube-webos.git "$SRC"
           git -C "$SRC" checkout f1b3b72926bb0cc312b5ceddc6a5b8c8ca081914
+          cp "$SRC/LICENSE" "$APP_DIR/LICENSE"
 
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
           node "$APP_DIR/tests/test-shorts-filter.mjs" "$SRC/src/shorts-filter.js"
@@ -130,7 +132,7 @@ jobs:
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add repo/
+          git add repo/ apps/*/LICENSE
           if git diff --cached --quiet; then
             exit 0
           fi
