@@ -56,7 +56,9 @@ Fixed <change>
 Based on <upstream app name> <upstream version>
 ```
 
-`Based on ...` links to the original upstream repository. The version on that line is always the actual pinned upstream application version, not GTV's package version. If more than one added or fixed change is relevant, each is emitted as its own `Added ...` or `Fixed ...` line.
+Release-note entries describe only functional differences from the pinned upstream application: user-visible behavior, reliability, compatibility, correctness, or performance. Repository-only work such as GTV branding, metadata, package-feed changes, CI, tests, build plumbing, documentation, or other maintenance must not appear unless it directly changes the application's runtime behavior.
+
+`Based on ...` links to the original upstream repository. The version on that line is always the actual pinned upstream application version, not GTV's package version. If more than one added or fixed functional change is relevant, each is emitted as its own `Added ...` or `Fixed ...` line. Empty categories are omitted.
 
 ## Patched-app versioning
 
