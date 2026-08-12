@@ -1,1 +1,0 @@
-Every application directory must contain a complete local copy of its applicable license text in `LICENSE`. Link-only license stubs are not accepted. Patched upstream applications must preserve the license text from the pinned upstream source; original applications must include their complete chosen license text locally.
