@@ -3,8 +3,8 @@
   "kind": "upstream-patch",
   "id": "youtube.leanback.v4",
   "title": "YouTube AdFree",
-  "version": "1690.5.3",
-  "gtvRevision": 1,
+  "version": "690.5.3",
+  "gtvRevision": 0,
   "shortDescription": "Ad-free YouTube with Shorts removed and inline QR/shop playback overlays suppressed.",
   "description": "YouTube AdFree built from the current webosbrew upstream with GTV patches that extend the existing Remove Shorts option across Home, Search, subscriptions, channel/browse shelves, pagination, and continuation responses; suppress inline playback promotion surfaces that can present QR-code and Shop overlays; and harden the inherited playback JSON hook so unrelated JSON.stringify calls retain native behavior and avoid unnecessary deep cloning. The Shorts filter uses YouTube TV renderer signatures rather than title text, preserving normal videos and non-Shorts shelves.",
   "changes": {
