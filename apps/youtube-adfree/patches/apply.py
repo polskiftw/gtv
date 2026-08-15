@@ -48,12 +48,22 @@ adblock_path = source / "src" / "adblock.js"
 adblock = adblock_path.read_text(encoding="utf-8")
 adblock_import = "import { configRead } from './config';\n"
 adblock_guard = "  if (!configRead('enableAdBlock')) {\n    return r;\n  }\n\n"
+legacy_feed_start = "  // remove ads from home\n"
+legacy_feed_end = "  if (Array.isArray(r?.entries)) {\n"
+legacy_helper_marker = "\n// Drop `adSlotRenderer`\n"
+
 if adblock.count(adblock_import) != 1 or adblock.count(adblock_guard) != 1:
-    raise SystemExit("upstream adblock.js changed; review playback-overlay patch before rebasing")
+    raise SystemExit("upstream adblock.js changed; review GTV adblock patch before rebasing")
+if adblock.count(legacy_feed_start) != 1 or adblock.count(legacy_feed_end) != 1:
+    raise SystemExit("upstream feed-ad block changed; review hardened feed filter before rebasing")
+if adblock.count(legacy_helper_marker) != 1:
+    raise SystemExit("upstream ad-slot helper changed; review hardened feed filter before rebasing")
 
 adblock = adblock.replace(
     adblock_import,
-    adblock_import + "import { removeSponsoredPlaybackOverlays } from './playback-overlay-filter';\n",
+    adblock_import
+    + "import { removeSponsoredFeedAds } from './feed-ad-filter';\n"
+    + "import { removeSponsoredPlaybackOverlays } from './playback-overlay-filter';\n",
     1,
 )
 adblock = adblock.replace(
@@ -65,7 +75,43 @@ adblock = adblock.replace(
     + "  }\n\n",
     1,
 )
+
+feed_start = adblock.index(legacy_feed_start)
+feed_end = adblock.index(legacy_feed_end, feed_start)
+adblock = (
+    adblock[:feed_start]
+    + "  const removedFeedAds = removeSponsoredFeedAds(r, arguments[0]);\n"
+    + "  if (removedFeedAds) {\n"
+    + "    console.info(`[adblock] Removed ${removedFeedAds} sponsored feed renderer(s)`);\n"
+    + "  }\n\n"
+    + adblock[feed_end:]
+)
+
+helper_start = adblock.index(legacy_helper_marker)
+adblock = adblock[:helper_start].rstrip() + "\n"
 adblock_path.write_text(adblock, encoding="utf-8")
+
+# Install the JSON.parse hook before app_api and the rest of the app bootstrap.
+# NicholasBly independently traced fresh-launch ad leakage to late adblock import
+# ordering; keeping this assertion pinned makes future upstream rebases explicit.
+user_script_path = source / "src" / "userScript.ts"
+user_script = user_script_path.read_text(encoding="utf-8")
+adblock_user_import = "import './adblock.js';\n"
+domrect_import = "import './domrect-polyfill';\n"
+late_import_pair = "import './app_api/index';\nimport './adblock.js';\n"
+if (
+    user_script.count(adblock_user_import) != 1
+    or user_script.count(domrect_import) != 1
+    or user_script.count(late_import_pair) != 1
+):
+    raise SystemExit("upstream userScript.ts import order changed; review early adblock hook patch")
+user_script = user_script.replace(
+    domrect_import,
+    domrect_import + adblock_user_import,
+    1,
+)
+user_script = user_script.replace(late_import_pair, "import './app_api/index';\n", 1)
+user_script_path.write_text(user_script, encoding="utf-8")
 
 config_path = source / "src" / "config.js"
 config = config_path.read_text(encoding="utf-8")
@@ -77,6 +123,7 @@ config_path.write_text(config.replace(old_description, new_description, 1), enco
 
 shutil.copy2(patches / "shorts.js", source / "src" / "shorts.js")
 shutil.copy2(patches / "shorts-filter.js", source / "src" / "shorts-filter.js")
+shutil.copy2(patches / "feed-ad-filter.js", source / "src" / "feed-ad-filter.js")
 shutil.copy2(patches / "playback-overlay-filter.js", source / "src" / "playback-overlay-filter.js")
 shutil.copy2(patches / "json-stringify.ts", json_stringify_path)
 
