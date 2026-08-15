@@ -50,9 +50,9 @@
         "rootRequired": true,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "7c57fa882828b411f574e2aa888665c908e2df0c8cc93e6b376815154af2b1c0"
+          "sha256": "1915e06c8e4ae68ccc05b61179cf92803aadf9a71833e52f3f3e219c25c2dc0e"
         },
-        "ipkSize": 110420
+        "ipkSize": 110410
       },
       "pool": "main",
       "requirements": {
@@ -68,22 +68,22 @@
       "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/youtube-adfree.json",
       "manifest": {
         "id": "youtube.leanback.v4",
-        "version": "690.5.3",
+        "version": "1690.5.3",
         "type": "web",
         "title": "YouTube AdFree",
-        "appDescription": "YouTube AdFree built from the current webosbrew upstream with GTV patches that extend the existing Remove Shorts option across Home, Search, subscriptions, channel/browse shelves, pagination, and continuation responses; suppress inline playback promotion surfaces that can present QR-code and Shop overlays; and harden the inherited playback JSON hook so unrelated JSON.stringify calls retain native behavior and avoid unnecessary deep cloning. The Shorts filter uses YouTube TV renderer signatures rather than title text, preserving normal videos and non-Shorts shelves.",
+        "appDescription": "YouTube AdFree built from webosbrew upstream 0.5.3 with GTV patches that harden Home/feed ad filtering against fresh-launch timing, wrapped renderer shapes, continuations, and known masthead/promotion renderer variants; extend the existing Remove Shorts option across Home, Search, subscriptions, channel/browse shelves, pagination, and continuation responses; suppress inline playback promotion surfaces that can present QR-code and Shop overlays; and harden the inherited playback JSON hook so unrelated JSON.stringify calls retain native behavior and avoid unnecessary deep cloning.",
         "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/youtube-adfree.png",
         "sourceUrl": "https://github.com/webosbrew/youtube-webos",
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "f02bdddb921d639bb6e3cd8ec1b4549d5efc482498b3c3d9895b3a13df3eb284"
+          "sha256": "1a74d3767f5bf0a206a95e3e67faa8c331c4928f5274d17b7b0097aa2308a740"
         },
-        "ipkSize": 494648
+        "ipkSize": 496092
       },
       "pool": "main",
       "requirements": {},
-      "shortDescription": "Ad-free YouTube with Shorts removed and inline QR/shop playback overlays suppressed.",
+      "shortDescription": "Ad-free YouTube with hardened feed ad blocking, Shorts removed, and sponsored playback overlays suppressed.",
       "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/descriptions/youtube-adfree.html"
     }
   ]
