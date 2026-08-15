@@ -14,7 +14,7 @@ import zipfile
 from pathlib import Path
 
 
-ARCHIVE_URL = "https://typodermicfonts.com/wp-content/uploads/2026/08/typodermic-free-fonts-2026g.zip"
+ARCHIVE_URL = "https://typodermicfonts.com/assets/downloads/typodermic-free-fonts-2026g.zip"
 ARCHIVE_SHA256 = "8998923f5ca62b2587df7124daec34fdd0c14dca460222167efa924f6a72d974"
 FONT_MEMBER = "Pricedown Bl.otf"
 FONT_SHA256 = "19f8cd90ce76992c565debe80d167f58e6e1e79a6e0b86f24bd9dce12052b256"
