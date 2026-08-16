@@ -168,7 +168,7 @@ jobs:
           metadata = json.loads(Path('apps/youtube-adfree/app.json').read_text(encoding='utf-8'))
           if metadata.get('id') != 'youtube.leanback.v4':
               raise SystemExit('DEV metadata changed application ID')
-          if metadata.get('version') != '2690.5.3':
+          if metadata.get('version') != '3690.5.3':
               raise SystemExit(f"unexpected DEV version: {metadata.get('version')!r}")
           PY
 
