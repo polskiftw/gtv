@@ -6,6 +6,8 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
+import re
 import tarfile
 from pathlib import Path
 
@@ -16,7 +18,14 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 APPS = ROOT / "apps"
 REPO = ROOT / "repo"
-RAW_BASE = "https://raw.githubusercontent.com/polskiftw/gtv/main/repo"
+REPOSITORY_REF = (
+    os.environ.get("GTV_REPOSITORY_REF")
+    or os.environ.get("GITHUB_REF_NAME")
+    or "main"
+)
+if not re.fullmatch(r"[A-Za-z0-9._-]+", REPOSITORY_REF):
+    raise SystemExit(f"unsupported repository ref for raw URLs: {REPOSITORY_REF!r}")
+RAW_BASE = f"https://raw.githubusercontent.com/polskiftw/gtv/{REPOSITORY_REF}/repo"
 
 
 def fail(message: str) -> None:
