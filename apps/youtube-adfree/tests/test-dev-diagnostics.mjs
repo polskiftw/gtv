@@ -107,6 +107,7 @@ assert.ok(snapshot.largestResponses.length >= 1);
 
 const devUi = await readFile(devUiPath, 'utf8');
 assert.match(devUi, /new Set\(\[406,\s*167,\s*191\]\)/);
+assert.match(devUi, /new Set\(\[461,\s*27\]\)/);
 assert.match(devUi, /getFeedAdDiagnosticsSnapshot/);
 assert.match(devUi, /stopImmediatePropagation/);
 assert.match(devUi, /RECENT STRUCTURED RESPONSES/);
@@ -116,10 +117,21 @@ assert.match(devUi, /RENDERER \/ VIEW-MODEL INVENTORY/);
 assert.match(devUi, /AD \/ MASTHEAD \/ PROMO SIGNAL INVENTORY/);
 assert.match(devUi, /LEGACY HOME LEADING SHAPES/);
 assert.match(devUi, /overflow-y:auto/);
+assert.match(devUi, /evt\.key === 'ArrowUp'/);
+assert.match(devUi, /evt\.key === 'ArrowDown'/);
+assert.match(devUi, /panel\.report\.clientHeight \* PAGE_SCROLL_FRACTION/);
+assert.match(devUi, /window\.addEventListener\('keydown', handleKey, true\)/);
+assert.match(devUi, /window\.addEventListener\('keypress', handleKey, true\)/);
+assert.match(devUi, /window\.addEventListener\('keyup', handleKey, true\)/);
+assert.doesNotMatch(
+  devUi,
+  /document\.addEventListener\('(keydown|keypress|keyup)'/,
+  'DEV remote capture must run at window scope so YouTube cannot swallow D-pad events first'
+);
 assert.doesNotMatch(
   devUi,
   /console\.(log|debug|info)\(/,
   'the on-TV diagnostics UI should not be a console mirror'
 );
 
-console.log('dev-diagnostics: expanded schema profiling and blue-key UI contract passed');
+console.log('dev-diagnostics: expanded schema profiling and window-level remote UI contract passed');
