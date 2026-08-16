@@ -1,15 +1,15 @@
 {
   "id": "youtube.leanback.v4",
-  "version": "4690.5.3",
+  "version": "5690.5.3",
   "type": "web",
   "title": "YouTube AdFree",
-  "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, profiles recent and large structured responses without depending on the legacy Home response path, and fixes the diagnostics remote handling by capturing D-pad and Back events at window scope before YouTube can consume them. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
+  "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, profiles recent and large structured responses without depending on the legacy Home response path, and presents the frozen diagnostics snapshot as real photograph-sized pages. Blue opens the report and advances one page per press; Back is the only way to close it, avoiding unreliable D-pad scrolling entirely. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
   "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/youtube-adfree.png",
   "sourceUrl": "https://github.com/webosbrew/youtube-webos",
   "rootRequired": false,
   "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/youtube-adfree.ipk",
   "ipkHash": {
-    "sha256": "6c63411f870fe4f505e3a9ba3024f76268bc7b1db0fd0952b02c04bc4e5388ec"
+    "sha256": "807f53a4a9b95b123259b1354ea67825bf36cbd5de9bab2af4fc16999318eadc"
   },
-  "ipkSize": 517528
+  "ipkSize": 518148
 }
