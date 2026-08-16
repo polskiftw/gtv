@@ -8,11 +8,19 @@ import hashlib
 import json
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from badge_finish import apply_badge_opacity
 from icon_sources import cache_bust_launcher_icon_paths, discover_launcher_icon_paths
 from smart_badge import BadgeConfig, generate_branded_icon
+
+
+def invert_rgba(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    inverted = ImageOps.invert(rgba.convert("RGB")).convert("RGBA")
+    inverted.putalpha(alpha)
+    return inverted
 
 
 def main() -> None:
@@ -28,6 +36,10 @@ def main() -> None:
         raise SystemExit(f"branding is disabled for {metadata['slug']}; do not invoke the badge builder")
     config = BadgeConfig.from_metadata(branding)
     opacity = float(branding.get("opacity", 1.0))
+    invert_final = branding.get("invertFinal", False)
+    if not isinstance(invert_final, bool):
+        raise SystemExit("branding.invertFinal must be a boolean when provided")
+
     explicit_icon_paths = branding.get("sourceIcons")
     if (
         not isinstance(explicit_icon_paths, list)
@@ -70,7 +82,13 @@ def main() -> None:
             if cache_key not in cache:
                 output, diagnostics = generate_branded_icon(rgba, config)
                 output = apply_badge_opacity(rgba, output, opacity)
-                diagnostics = {**diagnostics, "opacity": opacity}
+                if invert_final:
+                    output = invert_rgba(output)
+                diagnostics = {
+                    **diagnostics,
+                    "opacity": opacity,
+                    "invertFinal": invert_final,
+                }
                 cache[cache_key] = (output, diagnostics)
             output, diagnostics = cache[cache_key]
         output.save(icon_path, format="PNG", optimize=True)
