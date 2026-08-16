@@ -11,18 +11,18 @@
     {
       "id": "com.gtv.gnews",
       "title": "gnews",
-      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/gnews.png",
-      "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/gnews.json",
+      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/gnews.png",
+      "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/manifests/gnews.json",
       "manifest": {
         "id": "com.gtv.gnews",
         "version": "1.0.2",
         "type": "web",
         "title": "gnews",
         "appDescription": "A deliberately tiny TV-first launcher for ABC57, WSBT 22, WNDU 16 News Now, and ROAR. Use the remote arrows to choose a tile, press OK to watch, and press Back to return to the same tile.",
-        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/gnews.png",
+        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/gnews.png",
         "sourceUrl": "https://github.com/polskiftw/gtv/tree/main/apps/gnews",
         "rootRequired": false,
-        "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/gnews.ipk",
+        "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/gnews.ipk",
         "ipkHash": {
           "sha256": "270cd01003ef26b9be0a101dadbb241656c6b392d7e92ef2a286921ad003a5ac"
         },
@@ -37,20 +37,20 @@
     {
       "id": "org.webosbrew.appupdateblocker",
       "title": "LG App Update Blocker",
-      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/lg-app-update-blocker.png",
-      "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/lg-app-update-blocker.json",
+      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/lg-app-update-blocker.png",
+      "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/manifests/lg-app-update-blocker.json",
       "manifest": {
         "id": "org.webosbrew.appupdateblocker",
         "version": "691.0.0",
         "type": "web",
         "title": "LG App Update Blocker",
         "appDescription": "LG App Update Blocker with 5-way remote navigation, visible focus, OK-button support, deterministic startup focus, and safe exclusion of text-entry fields from D-pad navigation.",
-        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/lg-app-update-blocker.png",
+        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/lg-app-update-blocker.png",
         "sourceUrl": "https://github.com/dr0dr1dr2dr3/lgappupdateblocker",
         "rootRequired": true,
-        "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
+        "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "a3be86c64e4545db6089e9336d744e783959adf05a16c30007ead6e115fa0466"
+          "sha256": "e78a305f3223aa382d75a1a63039dde49b46877c511de719761df3902cf1ea7b"
         },
         "ipkSize": 110420
       },
@@ -59,32 +59,32 @@
         "webosRelease": ">=5.0"
       },
       "shortDescription": "LG update blocker with TV remote navigation.",
-      "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/descriptions/lg-app-update-blocker.html"
+      "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/descriptions/lg-app-update-blocker.html"
     },
     {
       "id": "youtube.leanback.v4",
       "title": "YouTube AdFree",
-      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/youtube-adfree.png",
-      "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/youtube-adfree.json",
+      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/youtube-adfree.png",
+      "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/manifests/youtube-adfree.json",
       "manifest": {
         "id": "youtube.leanback.v4",
         "version": "2690.5.3",
         "type": "web",
         "title": "YouTube AdFree",
         "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, and adds a blue-button diagnostics screen that snapshots feed schema information useful for identifying new or changed masthead/promotion renderer shapes. Diagnostics record only schema/key names and object paths, not payload values.",
-        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/youtube-adfree.png",
+        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/youtube-adfree.png",
         "sourceUrl": "https://github.com/webosbrew/youtube-webos",
         "rootRequired": false,
-        "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
+        "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "a9995ada4f36f525f7a055423e49ae8a8219769152bf10918a14bf71c084a47d"
+          "sha256": "a850cd93f168fbf18a3124bfaff7ca3db15e4a981beec52777f0acbcf983d933"
         },
-        "ipkSize": 504158
+        "ipkSize": 504154
       },
       "pool": "main",
       "requirements": {},
       "shortDescription": "Development build with on-TV feed diagnostics and hardened ad blocking.",
-      "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/descriptions/youtube-adfree.html"
+      "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/descriptions/youtube-adfree.html"
     }
   ]
 }

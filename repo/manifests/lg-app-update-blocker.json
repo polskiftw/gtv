@@ -4,12 +4,12 @@
   "type": "web",
   "title": "LG App Update Blocker",
   "appDescription": "LG App Update Blocker with 5-way remote navigation, visible focus, OK-button support, deterministic startup focus, and safe exclusion of text-entry fields from D-pad navigation.",
-  "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/lg-app-update-blocker.png",
+  "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/lg-app-update-blocker.png",
   "sourceUrl": "https://github.com/dr0dr1dr2dr3/lgappupdateblocker",
   "rootRequired": true,
-  "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
+  "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/lg-app-update-blocker.ipk",
   "ipkHash": {
-    "sha256": "a3be86c64e4545db6089e9336d744e783959adf05a16c30007ead6e115fa0466"
+    "sha256": "e78a305f3223aa382d75a1a63039dde49b46877c511de719761df3902cf1ea7b"
   },
   "ipkSize": 110420
 }

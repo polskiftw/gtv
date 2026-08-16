@@ -4,10 +4,10 @@
   "type": "web",
   "title": "gnews",
   "appDescription": "A deliberately tiny TV-first launcher for ABC57, WSBT 22, WNDU 16 News Now, and ROAR. Use the remote arrows to choose a tile, press OK to watch, and press Back to return to the same tile.",
-  "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/gnews.png",
+  "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/gnews.png",
   "sourceUrl": "https://github.com/polskiftw/gtv/tree/main/apps/gnews",
   "rootRequired": false,
-  "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/gnews.ipk",
+  "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/gnews.ipk",
   "ipkHash": {
     "sha256": "270cd01003ef26b9be0a101dadbb241656c6b392d7e92ef2a286921ad003a5ac"
   },
