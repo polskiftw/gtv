@@ -92,22 +92,24 @@ adblock = adblock[:helper_start].rstrip() + "\n"
 adblock_path.write_text(adblock, encoding="utf-8")
 
 # Install the JSON.parse hook before app_api and the rest of the app bootstrap.
-# NicholasBly independently traced fresh-launch ad leakage to late adblock import
-# ordering; keeping this assertion pinned makes future upstream rebases explicit.
+# The DEV diagnostics import is placed immediately after adblock so its capture-
+# phase blue-key listener is registered before upstream ui.js claims that key.
 user_script_path = source / "src" / "userScript.ts"
 user_script = user_script_path.read_text(encoding="utf-8")
 adblock_user_import = "import './adblock.js';\n"
+dev_diagnostics_import = "import './dev-diagnostics.js';\n"
 domrect_import = "import './domrect-polyfill';\n"
 late_import_pair = "import './app_api/index';\nimport './adblock.js';\n"
 if (
     user_script.count(adblock_user_import) != 1
     or user_script.count(domrect_import) != 1
     or user_script.count(late_import_pair) != 1
+    or dev_diagnostics_import in user_script
 ):
-    raise SystemExit("upstream userScript.ts import order changed; review early adblock hook patch")
+    raise SystemExit("upstream userScript.ts import order changed; review early adblock/dev diagnostics patch")
 user_script = user_script.replace(
     domrect_import,
-    domrect_import + adblock_user_import,
+    domrect_import + adblock_user_import + dev_diagnostics_import,
     1,
 )
 user_script = user_script.replace(late_import_pair, "import './app_api/index';\n", 1)
@@ -126,6 +128,7 @@ shutil.copy2(patches / "shorts-filter.js", source / "src" / "shorts-filter.js")
 shutil.copy2(patches / "feed-ad-filter.js", source / "src" / "feed-ad-filter.js")
 shutil.copy2(patches / "playback-overlay-filter.js", source / "src" / "playback-overlay-filter.js")
 shutil.copy2(patches / "json-stringify.ts", json_stringify_path)
+shutil.copy2(patches / "dev-diagnostics.js", source / "src" / "dev-diagnostics.js")
 
 package["version"] = version
 package_path.write_text(json.dumps(package, indent=2) + "\n", encoding="utf-8")
