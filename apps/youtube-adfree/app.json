@@ -3,19 +3,21 @@
   "kind": "upstream-patch",
   "id": "youtube.leanback.v4",
   "title": "YouTube AdFree",
-  "version": "2690.5.3",
-  "gtvRevision": 2,
-  "shortDescription": "Development build with on-TV feed diagnostics and hardened ad blocking.",
-  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, and adds a blue-button diagnostics screen that snapshots feed schema information useful for identifying new or changed masthead/promotion renderer shapes. Diagnostics record only schema/key names and object paths, not payload values.",
+  "version": "3690.5.3",
+  "gtvRevision": 3,
+  "shortDescription": "Development build with expanded on-TV schema diagnostics and hardened ad blocking.",
+  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, and expands the blue-button diagnostics screen to profile recent and large structured responses without depending on the legacy Home response path. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
   "changes": {
     "added": [
-      "Blue-button GTV diagnostics screen with a compact frozen snapshot of feed-ad schema observations.",
-      "Unknown/suspicious renderer-key capture with object paths, nearby key names, Home leading-item shapes, and simple filter counters."
+      "Broad response-shape profiling for recent and largest structured YouTube JSON responses, independent of the legacy Home-path detector.",
+      "Session renderer/view-model inventory, ad/masthead/promo signal inventory, response-shape frequency counts, notable array paths, and safe scalar schema hints for on-TV photography."
     ],
     "changed": [
-      "Development branding inverts the final launcher and Homebrew Channel icon colors for unmistakable visual identification."
+      "Blue-button diagnostics report is longer and denser so multiple TV photos can capture substantially more schema evidence.",
+      "Development branding continues to invert the final launcher and Homebrew Channel icon colors for unmistakable visual identification."
     ],
     "fixed": [
+      "DEV diagnostics failing to identify Home-like responses when YouTube no longer uses the previously assumed tvBrowseRenderer/tvSurfaceContentRenderer path.",
       "Sponsored Home masthead and feed ads escaping AdBlock during fresh app loads or alternate response schemas.",
       "The playback JSON hook so unrelated JSON.stringify calls keep native behavior and avoid unnecessary deep cloning."
     ]
