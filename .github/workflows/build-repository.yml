@@ -3,7 +3,7 @@ name: Build Homebrew repository
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'apps/**'
       - 'branding/**'
@@ -69,6 +69,9 @@ jobs:
       - name: Test YouTube sponsored feed filter
         run: node apps/youtube-adfree/tests/test-feed-ad-filter.mjs apps/youtube-adfree/patches/feed-ad-filter.js
 
+      - name: Test YouTube DEV diagnostics
+        run: node apps/youtube-adfree/tests/test-dev-diagnostics.mjs apps/youtube-adfree/patches/feed-ad-filter.js apps/youtube-adfree/patches/dev-diagnostics.js
+
       - name: Test YouTube Shorts filter
         run: node apps/youtube-adfree/tests/test-shorts-filter.mjs apps/youtube-adfree/patches/shorts-filter.js
 
@@ -116,6 +119,7 @@ jobs:
 
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
           node "$APP_DIR/tests/test-feed-ad-filter.mjs" "$SRC/src/feed-ad-filter.js"
+          node "$APP_DIR/tests/test-dev-diagnostics.mjs" "$SRC/src/feed-ad-filter.js" "$SRC/src/dev-diagnostics.js"
           node "$APP_DIR/tests/test-adblock-integration.mjs" "$SRC/src/adblock.js" "$SRC/src/userScript.ts"
           node "$APP_DIR/tests/test-shorts-filter.mjs" "$SRC/src/shorts-filter.js"
           node "$APP_DIR/tests/test-playback-overlay-filter.mjs" "$SRC/src/playback-overlay-filter.js"
