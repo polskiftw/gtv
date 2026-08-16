@@ -116,17 +116,33 @@ assert.match(devUi, /RESPONSE SHAPE COUNTS/);
 assert.match(devUi, /RENDERER \/ VIEW-MODEL INVENTORY/);
 assert.match(devUi, /AD \/ MASTHEAD \/ PROMO SIGNAL INVENTORY/);
 assert.match(devUi, /LEGACY HOME LEADING SHAPES/);
-assert.match(devUi, /overflow-y:auto/);
-assert.match(devUi, /evt\.key === 'ArrowUp'/);
-assert.match(devUi, /evt\.key === 'ArrowDown'/);
-assert.match(devUi, /panel\.report\.clientHeight \* PAGE_SCROLL_FRACTION/);
+assert.match(devUi, /PAGE_ROW_BUDGET/);
+assert.match(devUi, /paginateBlocks/);
+assert.match(devUi, /PAGE \$\{currentPage \+ 1\} \/ \$\{pageCount\}/);
+assert.match(devUi, /BLUE = next page/);
+assert.match(devUi, /BACK = close/);
+assert.match(devUi, /function nextPage\(\)/);
+assert.match(devUi, /currentPage = \(currentPage \+ 1\) %/);
+assert.match(devUi, /if \(evt\.type === 'keydown'\) nextPage\(\)/);
+assert.match(devUi, /if \(evt\.type === 'keydown'\) closeDiagnostics\(\)/);
+assert.match(devUi, /overflow:hidden/);
 assert.match(devUi, /window\.addEventListener\('keydown', handleKey, true\)/);
 assert.match(devUi, /window\.addEventListener\('keypress', handleKey, true\)/);
 assert.match(devUi, /window\.addEventListener\('keyup', handleKey, true\)/);
 assert.doesNotMatch(
   devUi,
+  /ArrowUp|ArrowDown|scrollTop|PAGE_SCROLL_FRACTION/,
+  'DEV diagnostics must not depend on D-pad scrolling'
+);
+assert.doesNotMatch(
+  devUi,
+  /setVisible\(!visible\)/,
+  'Blue must advance pages rather than toggling the overlay closed'
+);
+assert.doesNotMatch(
+  devUi,
   /document\.addEventListener\('(keydown|keypress|keyup)'/,
-  'DEV remote capture must run at window scope so YouTube cannot swallow D-pad events first'
+  'DEV remote capture must remain at window scope'
 );
 assert.doesNotMatch(
   devUi,
@@ -134,4 +150,4 @@ assert.doesNotMatch(
   'the on-TV diagnostics UI should not be a console mirror'
 );
 
-console.log('dev-diagnostics: expanded schema profiling and window-level remote UI contract passed');
+console.log('dev-diagnostics: blue-button paging and Back-only exit contract passed');
