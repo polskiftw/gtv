@@ -3,14 +3,17 @@
   "kind": "upstream-patch",
   "id": "youtube.leanback.v4",
   "title": "YouTube AdFree",
-  "version": "1690.5.3",
-  "gtvRevision": 1,
-  "shortDescription": "Ad-free YouTube with hardened feed ad blocking, Shorts removed, and sponsored playback overlays suppressed.",
-  "description": "YouTube AdFree built from webosbrew upstream 0.5.3 with GTV patches that harden Home/feed ad filtering against fresh-launch timing, wrapped renderer shapes, continuations, and known masthead/promotion renderer variants; extend the existing Remove Shorts option across Home, Search, subscriptions, channel/browse shelves, pagination, and continuation responses; suppress inline playback promotion surfaces that can present QR-code and Shop overlays; and harden the inherited playback JSON hook so unrelated JSON.stringify calls retain native behavior and avoid unnecessary deep cloning.",
+  "version": "2690.5.3",
+  "gtvRevision": 2,
+  "shortDescription": "Development build with on-TV feed diagnostics and hardened ad blocking.",
+  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, and adds a blue-button diagnostics screen that snapshots feed schema information useful for identifying new or changed masthead/promotion renderer shapes. Diagnostics record only schema/key names and object paths, not payload values.",
   "changes": {
     "added": [
-      "Shorts removal throughout Home, Search, subscriptions, channel and browse shelves, pagination, and continuation results.",
-      "Suppression of inline QR-code and Shop overlays during video playback."
+      "Blue-button GTV diagnostics screen with a compact frozen snapshot of feed-ad schema observations.",
+      "Unknown/suspicious renderer-key capture with object paths, nearby key names, Home leading-item shapes, and simple filter counters."
+    ],
+    "changed": [
+      "Development branding inverts the final launcher and Homebrew Channel icon colors for unmistakable visual identification."
     ],
     "fixed": [
       "Sponsored Home masthead and feed ads escaping AdBlock during fresh app loads or alternate response schemas.",
@@ -33,7 +36,8 @@
     "sourceIcons": [
       "assets/icon.png"
     ],
-    "cacheBustLauncherIcons": true
+    "cacheBustLauncherIcons": true,
+    "invertFinal": true
   },
   "upstream": {
     "name": "YouTube webOS",
