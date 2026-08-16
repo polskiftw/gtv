@@ -2,10 +2,32 @@
 import { getFeedAdDiagnosticsSnapshot } from './feed-ad-filter';
 
 const BLUE_CODES = new Set([406, 167, 191]);
-const SCROLL_STEP = 420;
+const WEBOS_BACK_CODES = new Set([461, 27]);
+const PAGE_SCROLL_FRACTION = 0.78;
+const MIN_SCROLL_STEP = 480;
+
+function eventCode(evt) {
+  return evt.keyCode || evt.which || evt.charCode || 0;
+}
 
 function isBlueKey(evt) {
-  return BLUE_CODES.has(evt.charCode) || BLUE_CODES.has(evt.keyCode);
+  return BLUE_CODES.has(eventCode(evt));
+}
+
+function isBackKey(evt) {
+  const code = eventCode(evt);
+  return (
+    WEBOS_BACK_CODES.has(code) ||
+    evt.key === 'Escape' ||
+    evt.key === 'BrowserBack'
+  );
+}
+
+function scrollDirection(evt) {
+  const code = eventCode(evt);
+  if (code === 38 || evt.key === 'ArrowUp') return -1;
+  if (code === 40 || evt.key === 'ArrowDown') return 1;
+  return 0;
 }
 
 function formatClock(iso) {
@@ -41,16 +63,17 @@ function createDiagnosticsPanel() {
   ].join(';');
 
   const title = document.createElement('div');
-  title.textContent = 'GTV DEV DIAGNOSTICS v2';
+  title.textContent = 'GTV DEV DIAGNOSTICS v2.1';
   title.style.cssText =
     'font-size:34px;font-weight:700;margin:0 0 6px 0;letter-spacing:0.03em';
 
   const help = document.createElement('div');
-  help.textContent = 'BLUE or BACK closes  •  ↑/↓ scroll  •  photograph top-to-bottom';
+  help.textContent = 'BLUE or BACK closes  •  ↑/↓ page scroll  •  photograph top-to-bottom';
   help.style.cssText =
     'font-size:20px;opacity:0.82;margin:0 0 18px 0;padding-bottom:14px;border-bottom:2px solid #555';
 
   const report = document.createElement('pre');
+  report.tabIndex = -1;
   report.style.cssText = [
     'white-space:pre-wrap',
     'overflow-wrap:anywhere',
@@ -61,7 +84,8 @@ function createDiagnosticsPanel() {
     'overflow-y:auto',
     'overscroll-behavior:contain',
     'padding-right:16px',
-    'box-sizing:border-box'
+    'box-sizing:border-box',
+    'outline:none'
   ].join(';');
 
   overlay.appendChild(title);
@@ -239,47 +263,56 @@ function setVisible(nextVisible) {
   if (visible) {
     panel.report.textContent = formatSnapshot(getFeedAdDiagnosticsSnapshot());
     panel.report.scrollTop = 0;
+    panel.report.focus();
   }
+}
+
+function consume(evt) {
+  evt.preventDefault();
+  evt.stopPropagation();
+  evt.stopImmediatePropagation();
 }
 
 function handleKey(evt) {
   if (isBlueKey(evt)) {
-    evt.preventDefault();
-    evt.stopPropagation();
-    evt.stopImmediatePropagation();
-
-    if (evt.type === 'keydown') {
-      setVisible(!visible);
-    }
+    consume(evt);
+    if (evt.type === 'keydown') setVisible(!visible);
     return false;
   }
 
   if (!visible) return true;
 
-  if (evt.keyCode === 27) {
-    evt.preventDefault();
-    evt.stopPropagation();
-    evt.stopImmediatePropagation();
+  if (isBackKey(evt)) {
+    consume(evt);
     if (evt.type === 'keydown') setVisible(false);
     return false;
   }
 
-  if (evt.keyCode === 38 || evt.keyCode === 40) {
-    evt.preventDefault();
-    evt.stopPropagation();
-    evt.stopImmediatePropagation();
+  const direction = scrollDirection(evt);
+  if (direction !== 0) {
+    consume(evt);
 
     if (evt.type === 'keydown') {
-      panel.report.scrollTop += evt.keyCode === 38 ? -SCROLL_STEP : SCROLL_STEP;
+      const maxScroll = Math.max(0, panel.report.scrollHeight - panel.report.clientHeight);
+      const step = Math.max(
+        MIN_SCROLL_STEP,
+        Math.floor(panel.report.clientHeight * PAGE_SCROLL_FRACTION)
+      );
+      panel.report.scrollTop = Math.max(
+        0,
+        Math.min(maxScroll, panel.report.scrollTop + direction * step)
+      );
     }
     return false;
   }
 
-  evt.preventDefault();
-  evt.stopPropagation();
+  consume(evt);
   return false;
 }
 
-document.addEventListener('keydown', handleKey, true);
-document.addEventListener('keypress', handleKey, true);
-document.addEventListener('keyup', handleKey, true);
+// YouTube installs its own remote-navigation handlers at window scope. Listen at
+// window capture too, and install this DEV listener before the app bootstrap, so
+// D-pad events cannot be swallowed before the diagnostics overlay sees them.
+window.addEventListener('keydown', handleKey, true);
+window.addEventListener('keypress', handleKey, true);
+window.addEventListener('keyup', handleKey, true);
