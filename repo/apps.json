@@ -50,9 +50,9 @@
         "rootRequired": true,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "649d81e8520161ab455d51c6a3ef01cbf96c2b25d3efcc4f77e2e10870ce32af"
+          "sha256": "bf1385666018f70b222f84106f641a4507dee26f117fc442aa23fe6cc972bcc8"
         },
-        "ipkSize": 110420
+        "ipkSize": 110410
       },
       "pool": "main",
       "requirements": {
@@ -68,22 +68,22 @@
       "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/manifests/youtube-adfree.json",
       "manifest": {
         "id": "youtube.leanback.v4",
-        "version": "3690.5.3",
+        "version": "4690.5.3",
         "type": "web",
         "title": "YouTube AdFree",
-        "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, and expands the blue-button diagnostics screen to profile recent and large structured responses without depending on the legacy Home response path. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
+        "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, profiles recent and large structured responses without depending on the legacy Home response path, and fixes the diagnostics remote handling by capturing D-pad and Back events at window scope before YouTube can consume them. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
         "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/youtube-adfree.png",
         "sourceUrl": "https://github.com/webosbrew/youtube-webos",
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "da3d6b4cb7389c36c3c1b353881dc2b85f29fb10af7fbee1777beb7395cbe08b"
+          "sha256": "6c63411f870fe4f505e3a9ba3024f76268bc7b1db0fd0952b02c04bc4e5388ec"
         },
-        "ipkSize": 516620
+        "ipkSize": 517528
       },
       "pool": "main",
       "requirements": {},
-      "shortDescription": "Development build with expanded on-TV schema diagnostics and hardened ad blocking.",
+      "shortDescription": "Development build with expanded on-TV schema diagnostics, fixed remote scrolling, and hardened ad blocking.",
       "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/descriptions/youtube-adfree.html"
     }
   ]
