@@ -3,8 +3,8 @@ import { getFeedAdDiagnosticsSnapshot } from './feed-ad-filter';
 
 const BLUE_CODES = new Set([406, 167, 191]);
 const WEBOS_BACK_CODES = new Set([461, 27]);
-const PAGE_SCROLL_FRACTION = 0.78;
-const MIN_SCROLL_STEP = 480;
+const PAGE_ROW_BUDGET = 29;
+const ESTIMATED_CHARS_PER_ROW = 92;
 
 function eventCode(evt) {
   return evt.keyCode || evt.which || evt.charCode || 0;
@@ -21,13 +21,6 @@ function isBackKey(evt) {
     evt.key === 'Escape' ||
     evt.key === 'BrowserBack'
   );
-}
-
-function scrollDirection(evt) {
-  const code = eventCode(evt);
-  if (code === 38 || evt.key === 'ArrowUp') return -1;
-  if (code === 40 || evt.key === 'ArrowDown') return 1;
-  return 0;
 }
 
 function formatClock(iso) {
@@ -63,47 +56,54 @@ function createDiagnosticsPanel() {
   ].join(';');
 
   const title = document.createElement('div');
-  title.textContent = 'GTV DEV DIAGNOSTICS v2.1';
+  title.textContent = 'GTV DEV DIAGNOSTICS v3';
   title.style.cssText =
     'font-size:34px;font-weight:700;margin:0 0 6px 0;letter-spacing:0.03em';
 
   const help = document.createElement('div');
-  help.textContent = 'BLUE or BACK closes  •  ↑/↓ page scroll  •  photograph top-to-bottom';
   help.style.cssText =
-    'font-size:20px;opacity:0.82;margin:0 0 18px 0;padding-bottom:14px;border-bottom:2px solid #555';
+    'font-size:20px;opacity:0.82;margin:0 0 12px 0;padding-bottom:12px;border-bottom:2px solid #555';
+
+  const pageLabel = document.createElement('div');
+  pageLabel.style.cssText =
+    'font-size:21px;font-weight:700;margin:0 0 12px 0;letter-spacing:0.04em';
 
   const report = document.createElement('pre');
-  report.tabIndex = -1;
   report.style.cssText = [
     'white-space:pre-wrap',
     'overflow-wrap:anywhere',
     'word-break:break-word',
     'font:inherit',
     'margin:0',
-    'height:calc(100vh - 150px)',
-    'overflow-y:auto',
-    'overscroll-behavior:contain',
+    'height:calc(100vh - 178px)',
+    'overflow:hidden',
     'padding-right:16px',
-    'box-sizing:border-box',
-    'outline:none'
+    'box-sizing:border-box'
   ].join(';');
 
   overlay.appendChild(title);
   overlay.appendChild(help);
+  overlay.appendChild(pageLabel);
   overlay.appendChild(report);
   document.body.appendChild(overlay);
 
-  return { overlay, report };
+  return { overlay, help, pageLabel, report };
 }
 
 const panel = createDiagnosticsPanel();
 let visible = false;
+let pages = [];
+let currentPage = 0;
 
-function appendResponseProfile(lines, profile, index) {
-  lines.push(
-    `${index}. R${profile.sequence}  ${formatChars(profile.sourceChars)}  ${formatClock(profile.observedAt)}`
-  );
-  lines.push(`   top: ${profile.topKeys.length ? profile.topKeys.join(', ') : '(none)'}`);
+function block(lines) {
+  return Array.isArray(lines) ? lines : [lines];
+}
+
+function responseProfileBlock(profile, index) {
+  const lines = [
+    `${index}. R${profile.sequence}  ${formatChars(profile.sourceChars)}  ${formatClock(profile.observedAt)}`,
+    `   top: ${profile.topKeys.length ? profile.topKeys.join(', ') : '(none)'}`
+  ];
 
   if (profile.hints.length) {
     lines.push('   scalar hints:');
@@ -128,12 +128,8 @@ function appendResponseProfile(lines, profile, index) {
     profile.signals.forEach((entry) => {
       lines.push(`     ${entry.key}  (${entry.valueKind})`);
       lines.push(`       ${entry.path}`);
-      if (entry.details.length) {
-        lines.push(`       details: ${entry.details.join(', ')}`);
-      }
-      if (entry.nearbyKeys.length) {
-        lines.push(`       nearby: ${entry.nearbyKeys.join(', ')}`);
-      }
+      if (entry.details.length) lines.push(`       details: ${entry.details.join(', ')}`);
+      if (entry.nearbyKeys.length) lines.push(`       nearby: ${entry.nearbyKeys.join(', ')}`);
     });
   }
 
@@ -150,45 +146,48 @@ function appendResponseProfile(lines, profile, index) {
     }`,
     ''
   );
+  return lines;
 }
 
-function formatSnapshot(snapshot) {
-  const lines = [
-    `build: v${__YTAF_VERSION__}`,
-    `snapshot opened: ${formatClock(new Date().toISOString())}`,
-    `responses scanned: ${snapshot.parsedResponses}`,
-    `responses profiled: ${snapshot.profiledResponses}`,
-    `largest response observed: ${formatChars(snapshot.largestObservedChars)}`,
-    `legacy Home-path matches: ${snapshot.homeResponses}`,
-    `responses with known ad markers: ${snapshot.knownMarkerResponses}`,
-    `known feed renderers removed: ${snapshot.removedFeedRenderers}`,
-    `last response observed: ${formatClock(snapshot.lastObservedAt)}`,
-    '',
-    '=== 1. RECENT STRUCTURED RESPONSES ===',
-    'Newest bounded response-shape profiles. R numbers correlate with later sections.',
-    ''
-  ];
+function buildReportBlocks(snapshot) {
+  const blocks = [];
+
+  blocks.push(
+    block([
+      `build: v${__YTAF_VERSION__}`,
+      `snapshot opened: ${formatClock(new Date().toISOString())}`,
+      `responses scanned: ${snapshot.parsedResponses}`,
+      `responses profiled: ${snapshot.profiledResponses}`,
+      `largest response observed: ${formatChars(snapshot.largestObservedChars)}`,
+      `legacy Home-path matches: ${snapshot.homeResponses}`,
+      `responses with known ad markers: ${snapshot.knownMarkerResponses}`,
+      `known feed renderers removed: ${snapshot.removedFeedRenderers}`,
+      `last response observed: ${formatClock(snapshot.lastObservedAt)}`,
+      '',
+      '=== 1. RECENT STRUCTURED RESPONSES ===',
+      'Newest bounded response-shape profiles. R numbers correlate with later sections.',
+      ''
+    ])
+  );
 
   if (snapshot.recentResponses.length === 0) {
-    lines.push('none captured yet', '');
+    blocks.push(block(['none captured yet', '']));
   } else {
     snapshot.recentResponses
       .slice()
       .reverse()
-      .forEach((profile, index) => appendResponseProfile(lines, profile, index + 1));
+      .forEach((profile, index) => blocks.push(responseProfileBlock(profile, index + 1)));
   }
 
-  lines.push('=== 2. LARGEST PROFILED RESPONSES ===');
+  blocks.push(block(['=== 2. LARGEST PROFILED RESPONSES ===']));
   if (snapshot.largestResponses.length === 0) {
-    lines.push('none captured yet');
+    blocks.push(block(['none captured yet', '']));
   } else {
     snapshot.largestResponses.forEach((profile, index) => {
-      lines.push(
-        `${index + 1}. R${profile.sequence}  ${formatChars(profile.sourceChars)}  ${formatClock(
-          profile.observedAt
-        )}`
-      );
-      lines.push(`   top: ${profile.topKeys.length ? profile.topKeys.join(', ') : '(none)'}`);
+      const lines = [
+        `${index + 1}. R${profile.sequence}  ${formatChars(profile.sourceChars)}  ${formatClock(profile.observedAt)}`,
+        `   top: ${profile.topKeys.length ? profile.topKeys.join(', ') : '(none)'}`
+      ];
       if (profile.hints.length) {
         lines.push(
           `   hints: ${profile.hints
@@ -197,74 +196,138 @@ function formatSnapshot(snapshot) {
             .join(' | ')}`
         );
       }
+      lines.push('');
+      blocks.push(lines);
     });
   }
 
-  lines.push('', '=== 3. RESPONSE SHAPE COUNTS ===');
+  blocks.push(block(['=== 3. RESPONSE SHAPE COUNTS ===']));
   if (snapshot.responseShapeCounts.length === 0) {
-    lines.push('none captured yet');
+    blocks.push(block(['none captured yet', '']));
   } else {
     snapshot.responseShapeCounts.forEach((entry, index) => {
-      lines.push(
-        `${index + 1}. [${entry.count}x, last R${entry.lastSequence}] ${entry.signature}`
+      blocks.push(
+        block([
+          `${index + 1}. [${entry.count}x, last R${entry.lastSequence}] ${entry.signature}`
+        ])
       );
     });
+    blocks.push(block(['']));
   }
 
-  lines.push('', '=== 4. RECENT RENDERER / VIEW-MODEL INVENTORY ===');
+  blocks.push(block(['=== 4. RECENT RENDERER / VIEW-MODEL INVENTORY ===']));
   if (snapshot.rendererInventory.length === 0) {
-    lines.push('none captured yet');
+    blocks.push(block(['none captured yet', '']));
   } else {
     snapshot.rendererInventory.forEach((entry, index) => {
-      lines.push(`${index + 1}. ${entry.key}  [seen ${entry.count}, last R${entry.lastSequence}]`);
-      lines.push(`   ${entry.lastPath}`);
+      blocks.push(
+        block([
+          `${index + 1}. ${entry.key}  [seen ${entry.count}, last R${entry.lastSequence}]`,
+          `   ${entry.lastPath}`
+        ])
+      );
     });
+    blocks.push(block(['']));
   }
 
-  lines.push('', '=== 5. AD / MASTHEAD / PROMO SIGNAL INVENTORY ===');
+  blocks.push(block(['=== 5. AD / MASTHEAD / PROMO SIGNAL INVENTORY ===']));
   if (snapshot.signalInventory.length === 0) {
-    lines.push('none captured yet');
+    blocks.push(block(['none captured yet', '']));
   } else {
     snapshot.signalInventory.forEach((entry, index) => {
-      lines.push(
-        `${index + 1}. ${entry.key}  [seen ${entry.count}, last R${entry.lastSequence}]  (${entry.valueKind})`
-      );
-      lines.push(`   ${entry.lastPath}`);
+      const lines = [
+        `${index + 1}. ${entry.key}  [seen ${entry.count}, last R${entry.lastSequence}]  (${entry.valueKind})`,
+        `   ${entry.lastPath}`
+      ];
       if (entry.details?.length) lines.push(`   details: ${entry.details.join(', ')}`);
+      blocks.push(lines);
     });
+    blocks.push(block(['']));
   }
 
-  lines.push('', '=== 6. LEGACY HOME LEADING SHAPES ===');
+  blocks.push(block(['=== 6. LEGACY HOME LEADING SHAPES ===']));
   if (snapshot.homeLeadingShapes.length === 0) {
-    lines.push('none captured — this is useful if the current Home schema moved');
+    blocks.push(block(['none captured — this is useful if the current Home schema moved', '']));
   } else {
     snapshot.homeLeadingShapes.forEach((item) => {
-      lines.push(`${item.index}. ${item.renderers.join(' > ')}`);
+      blocks.push(block([`${item.index}. ${item.renderers.join(' > ')}`]));
     });
+    blocks.push(block(['']));
   }
 
-  lines.push(
-    '',
-    '=== NOTE ===',
-    'This DEV build records response structure, key names, object paths, array lengths, and a small allowlist of scalar schema hints.',
-    'Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, and arbitrary payload strings are not retained.',
-    'The diagnostics observer does not block an unknown schema merely because it looks suspicious.'
+  blocks.push(
+    block([
+      '=== NOTE ===',
+      'This DEV build records response structure, key names, object paths, array lengths, and a small allowlist of scalar schema hints.',
+      'Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, and arbitrary payload strings are not retained.',
+      'The diagnostics observer does not block an unknown schema merely because it looks suspicious.'
+    ])
   );
 
-  return lines.join('\n');
+  return blocks;
 }
 
-function setVisible(nextVisible) {
-  if (nextVisible === visible) return;
+function estimatedRows(lines) {
+  let rows = 0;
+  lines.forEach((line) => {
+    rows += Math.max(1, Math.ceil(String(line).length / ESTIMATED_CHARS_PER_ROW));
+  });
+  return rows;
+}
 
-  visible = nextVisible;
-  panel.overlay.style.display = visible ? 'block' : 'none';
+function paginateBlocks(blocks) {
+  const result = [];
+  let currentLines = [];
+  let currentRows = 0;
 
-  if (visible) {
-    panel.report.textContent = formatSnapshot(getFeedAdDiagnosticsSnapshot());
-    panel.report.scrollTop = 0;
-    panel.report.focus();
+  blocks.forEach((lines) => {
+    const rows = estimatedRows(lines);
+    if (currentLines.length > 0 && currentRows + rows > PAGE_ROW_BUDGET) {
+      result.push(currentLines.join('\n'));
+      currentLines = [];
+      currentRows = 0;
+    }
+
+    // Very large response blocks may exceed one photo by themselves. Keep the
+    // block intact so paths and their labels are never separated across pages.
+    currentLines.push(...lines);
+    currentRows += rows;
+  });
+
+  if (currentLines.length > 0) result.push(currentLines.join('\n'));
+  return result.length > 0 ? result : ['No diagnostics captured yet.'];
+}
+
+function renderPage() {
+  const pageCount = Math.max(1, pages.length);
+  currentPage = ((currentPage % pageCount) + pageCount) % pageCount;
+  panel.pageLabel.textContent = `PAGE ${currentPage + 1} / ${pageCount}`;
+  panel.help.textContent = 'BLUE = next page  •  BACK = close  •  photograph each page';
+  panel.report.textContent = pages[currentPage] || 'No diagnostics captured yet.';
+}
+
+function openDiagnostics() {
+  pages = paginateBlocks(buildReportBlocks(getFeedAdDiagnosticsSnapshot()));
+  currentPage = 0;
+  visible = true;
+  panel.overlay.style.display = 'block';
+  renderPage();
+}
+
+function closeDiagnostics() {
+  visible = false;
+  panel.overlay.style.display = 'none';
+  pages = [];
+  currentPage = 0;
+}
+
+function nextPage() {
+  if (!visible) {
+    openDiagnostics();
+    return;
   }
+  currentPage = (currentPage + 1) % Math.max(1, pages.length);
+  renderPage();
 }
 
 function consume(evt) {
@@ -276,7 +339,7 @@ function consume(evt) {
 function handleKey(evt) {
   if (isBlueKey(evt)) {
     consume(evt);
-    if (evt.type === 'keydown') setVisible(!visible);
+    if (evt.type === 'keydown') nextPage();
     return false;
   }
 
@@ -284,25 +347,7 @@ function handleKey(evt) {
 
   if (isBackKey(evt)) {
     consume(evt);
-    if (evt.type === 'keydown') setVisible(false);
-    return false;
-  }
-
-  const direction = scrollDirection(evt);
-  if (direction !== 0) {
-    consume(evt);
-
-    if (evt.type === 'keydown') {
-      const maxScroll = Math.max(0, panel.report.scrollHeight - panel.report.clientHeight);
-      const step = Math.max(
-        MIN_SCROLL_STEP,
-        Math.floor(panel.report.clientHeight * PAGE_SCROLL_FRACTION)
-      );
-      panel.report.scrollTop = Math.max(
-        0,
-        Math.min(maxScroll, panel.report.scrollTop + direction * step)
-      );
-    }
+    if (evt.type === 'keydown') closeDiagnostics();
     return false;
   }
 
@@ -310,9 +355,8 @@ function handleKey(evt) {
   return false;
 }
 
-// YouTube installs its own remote-navigation handlers at window scope. Listen at
-// window capture too, and install this DEV listener before the app bootstrap, so
-// D-pad events cannot be swallowed before the diagnostics overlay sees them.
+// Blue is the only navigation control inside diagnostics. This deliberately
+// avoids competing with YouTube for D-pad events on webOS. Back alone exits.
 window.addEventListener('keydown', handleKey, true);
 window.addEventListener('keypress', handleKey, true);
 window.addEventListener('keyup', handleKey, true);
