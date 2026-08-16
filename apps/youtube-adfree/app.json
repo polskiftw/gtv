@@ -3,22 +3,23 @@
   "kind": "upstream-patch",
   "id": "youtube.leanback.v4",
   "title": "YouTube AdFree",
-  "version": "4690.5.3",
-  "gtvRevision": 4,
-  "shortDescription": "Development build with expanded on-TV schema diagnostics, fixed remote scrolling, and hardened ad blocking.",
-  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, profiles recent and large structured responses without depending on the legacy Home response path, and fixes the diagnostics remote handling by capturing D-pad and Back events at window scope before YouTube can consume them. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
+  "version": "5690.5.3",
+  "gtvRevision": 5,
+  "shortDescription": "Development build with blue-button paged schema diagnostics and hardened ad blocking.",
+  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, profiles recent and large structured responses without depending on the legacy Home response path, and presents the frozen diagnostics snapshot as real photograph-sized pages. Blue opens the report and advances one page per press; Back is the only way to close it, avoiding unreliable D-pad scrolling entirely. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
   "changes": {
     "added": [
       "Broad response-shape profiling for recent and largest structured YouTube JSON responses, independent of the legacy Home-path detector.",
-      "Session renderer/view-model inventory, ad/masthead/promo signal inventory, response-shape frequency counts, notable array paths, and safe scalar schema hints for on-TV photography."
+      "Session renderer/view-model inventory, ad/masthead/promo signal inventory, response-shape frequency counts, notable array paths, and safe scalar schema hints for on-TV photography.",
+      "Deterministic PAGE X / Y diagnostics pagination sized for photographing the report one screen at a time."
     ],
     "changed": [
-      "Diagnostics remote input now runs at window capture so YouTube navigation cannot swallow Up/Down before the DEV overlay sees it.",
-      "Up and Down move the diagnostics report by roughly one screenful per press, and Back recognizes the native webOS key code 461.",
+      "Blue now opens diagnostics and advances to the next generated page; after the final page it wraps to page 1.",
+      "Back is the only control that closes the diagnostics overlay, eliminating all dependence on D-pad scrolling.",
       "Development branding continues to invert the final launcher and Homebrew Channel icon colors for unmistakable visual identification."
     ],
     "fixed": [
-      "Up/Down scrolling on the DEV diagnostics report not responding on the TV.",
+      "Diagnostics navigation remaining unusable when YouTube or webOS consumed or ignored D-pad events.",
       "DEV diagnostics failing to identify Home-like responses when YouTube no longer uses the previously assumed tvBrowseRenderer/tvSurfaceContentRenderer path.",
       "Sponsored Home masthead and feed ads escaping AdBlock during fresh app loads or alternate response schemas.",
       "The playback JSON hook so unrelated JSON.stringify calls keep native behavior and avoid unnecessary deep cloning."
