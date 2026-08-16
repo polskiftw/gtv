@@ -2,7 +2,7 @@
 
 GTV-maintained patch of [`webosbrew/youtube-webos`](https://github.com/webosbrew/youtube-webos), pinned to commit `f1b3b72926bb0cc312b5ceddc6a5b8c8ca081914` (upstream version 0.5.3).
 
-GTV modification date: **2026-08-15**.
+GTV modification date: **2026-08-16**.
 
 The upstream application already provides ad blocking, SponsorBlock, quality controls, and a **Remove Shorts** setting. GTV keeps those features while hardening several response-filtering paths that are brittle in upstream 0.5.3.
 
@@ -32,6 +32,25 @@ The structural walk is bounded and only runs when the serialized JSON contains a
 
 GTV also moves the adblock module ahead of `app_api` during userscript initialization. This installs the `JSON.parse` hook earlier and closes the fresh-launch timing gap reported in the webOS YouTube fork family, where a sponsored first item could appear on initial app load but disappear after a refresh.
 
+### DEV on-TV diagnostics
+
+The `dev` branch keeps the same application ID (`youtube.leanback.v4`) and uses the higher GTV version `2690.5.3`, allowing it to replace the release build as an update.
+
+On the DEV build, the **blue remote button** opens a deliberately minimal full-screen diagnostics snapshot. Press Blue or Back to close it; Up/Down scroll only when the report is longer than the screen. Opening the screen takes a fresh snapshot, so the report does not continuously move while it is being read.
+
+The report contains:
+
+- counts for parsed responses, Home responses, known sponsored markers, and feed renderers removed
+- the first few renderer shapes from the most recent recognizable Home response
+- up to ten suspicious or previously unknown ad/promo/masthead-like key names
+- each suspicious key's object path, value type, occurrence count, and a few neighboring key names
+
+DEV diagnostics never retain or display payload values. They are intended to produce short, human-transcribable schema clues when a new masthead or promotion escapes the release filter.
+
+Because upstream uses Blue for Audio-Only mode, the DEV build intentionally takes over that key before upstream `ui.js` receives it. The normal upstream configuration screen remains on Green.
+
+DEV branding also inverts the RGB colors of the completed branded launcher icons and Homebrew Channel icon while preserving alpha, making the diagnostic build visually distinct from the release build.
+
 ### Sponsored playback overlay suppression
 
 Upstream 0.5.3 already sets `playbackContext.contentPlaybackContext.isInlinePlaybackNoAd` on playback requests, so GTV does not treat that request flag as the QR/Shop filter.
@@ -48,7 +67,7 @@ This hook is independent of the QR/Shop response filter above.
 
 ## Building
 
-The repository workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the feed-ad, adblock-integration, Shorts, sponsored-overlay, and playback-hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK.
+The repository workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the feed-ad, DEV-diagnostics, adblock-integration, Shorts, sponsored-overlay, and playback-hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK.
 
 The package keeps the upstream application ID, `youtube.leanback.v4`, so the official YouTube TV application must be uninstalled before installation, matching upstream requirements.
 
