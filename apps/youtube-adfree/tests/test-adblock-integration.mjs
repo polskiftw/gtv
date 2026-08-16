@@ -42,9 +42,21 @@ assert.match(
 );
 
 const earlyAdblock = userScript.indexOf("import './adblock.js';");
+const devDiagnostics = userScript.indexOf("import './dev-diagnostics.js';");
 const appApi = userScript.indexOf("import './app_api/index';");
+const upstreamUi = userScript.indexOf("import './ui.js';");
 assert.notEqual(earlyAdblock, -1, 'userScript must import adblock');
+assert.notEqual(devDiagnostics, -1, 'DEV userScript must import diagnostics');
 assert.notEqual(appApi, -1, 'userScript must import app_api');
+assert.notEqual(upstreamUi, -1, 'userScript must import upstream ui');
+assert.ok(
+  earlyAdblock < devDiagnostics,
+  'DEV diagnostics must initialize after the adblock/feed diagnostics module'
+);
+assert.ok(
+  devDiagnostics < appApi && devDiagnostics < upstreamUi,
+  'DEV diagnostics must register its capture-phase blue-key handler before upstream UI'
+);
 assert.ok(
   earlyAdblock < appApi,
   'adblock must initialize before app_api so fresh-launch responses cannot beat the JSON.parse hook'
@@ -54,5 +66,10 @@ assert.equal(
   1,
   'userScript must import adblock exactly once'
 );
+assert.equal(
+  (userScript.match(/import '\.\/dev-diagnostics\.js';/g) || []).length,
+  1,
+  'userScript must import DEV diagnostics exactly once'
+);
 
-console.log('adblock-integration: patch wiring and startup ordering passed');
+console.log('adblock-integration: DEV patch wiring and startup ordering passed');
