@@ -1,15 +1,15 @@
 {
   "id": "youtube.leanback.v4",
-  "version": "1690.5.3",
+  "version": "2690.5.3",
   "type": "web",
   "title": "YouTube AdFree",
-  "appDescription": "YouTube AdFree built from webosbrew upstream 0.5.3 with GTV patches that harden Home/feed ad filtering against fresh-launch timing, wrapped renderer shapes, continuations, and known masthead/promotion renderer variants; extend the existing Remove Shorts option across Home, Search, subscriptions, channel/browse shelves, pagination, and continuation responses; suppress inline playback promotion surfaces that can present QR-code and Shop overlays; and harden the inherited playback JSON hook so unrelated JSON.stringify calls retain native behavior and avoid unnecessary deep cloning.",
+  "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, and adds a blue-button diagnostics screen that snapshots feed schema information useful for identifying new or changed masthead/promotion renderer shapes. Diagnostics record only schema/key names and object paths, not payload values.",
   "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/youtube-adfree.png",
   "sourceUrl": "https://github.com/webosbrew/youtube-webos",
   "rootRequired": false,
   "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
   "ipkHash": {
-    "sha256": "1a74d3767f5bf0a206a95e3e67faa8c331c4928f5274d17b7b0097aa2308a740"
+    "sha256": "a850cd93f168fbf18a3124bfaff7ca3db15e4a981beec52777f0acbcf983d933"
   },
-  "ipkSize": 496092
+  "ipkSize": 504154
 }
