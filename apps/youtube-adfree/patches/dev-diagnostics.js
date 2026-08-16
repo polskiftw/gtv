@@ -2,7 +2,7 @@
 import { getFeedAdDiagnosticsSnapshot } from './feed-ad-filter';
 
 const BLUE_CODES = new Set([406, 167, 191]);
-const SCROLL_STEP = 160;
+const SCROLL_STEP = 420;
 
 function isBlueKey(evt) {
   return BLUE_CODES.has(evt.charCode) || BLUE_CODES.has(evt.keyCode);
@@ -13,6 +13,13 @@ function formatClock(iso) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   return date.toLocaleTimeString();
+}
+
+function formatChars(value) {
+  if (!Number.isFinite(value)) return 'unknown size';
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M chars`;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k chars`;
+  return `${value} chars`;
 }
 
 function createDiagnosticsPanel() {
@@ -27,21 +34,21 @@ function createDiagnosticsPanel() {
     'background:#050505',
     'color:#f5f5f5',
     'font-family:Arial,Helvetica,sans-serif',
-    'font-size:28px',
-    'line-height:1.35',
+    'font-size:24px',
+    'line-height:1.28',
     'box-sizing:border-box',
-    'padding:48px 64px'
+    'padding:38px 54px'
   ].join(';');
 
   const title = document.createElement('div');
-  title.textContent = 'GTV DEV DIAGNOSTICS';
+  title.textContent = 'GTV DEV DIAGNOSTICS v2';
   title.style.cssText =
-    'font-size:36px;font-weight:700;margin:0 0 8px 0;letter-spacing:0.03em';
+    'font-size:34px;font-weight:700;margin:0 0 6px 0;letter-spacing:0.03em';
 
   const help = document.createElement('div');
-  help.textContent = 'BLUE or BACK closes  •  ↑/↓ scroll';
+  help.textContent = 'BLUE or BACK closes  •  ↑/↓ scroll  •  photograph top-to-bottom';
   help.style.cssText =
-    'font-size:22px;opacity:0.8;margin:0 0 24px 0;padding-bottom:16px;border-bottom:2px solid #555';
+    'font-size:20px;opacity:0.82;margin:0 0 18px 0;padding-bottom:14px;border-bottom:2px solid #555';
 
   const report = document.createElement('pre');
   report.style.cssText = [
@@ -50,7 +57,7 @@ function createDiagnosticsPanel() {
     'word-break:break-word',
     'font:inherit',
     'margin:0',
-    'height:calc(100vh - 180px)',
+    'height:calc(100vh - 150px)',
     'overflow-y:auto',
     'overscroll-behavior:contain',
     'padding-right:16px',
@@ -68,49 +75,156 @@ function createDiagnosticsPanel() {
 const panel = createDiagnosticsPanel();
 let visible = false;
 
+function appendResponseProfile(lines, profile, index) {
+  lines.push(
+    `${index}. R${profile.sequence}  ${formatChars(profile.sourceChars)}  ${formatClock(profile.observedAt)}`
+  );
+  lines.push(`   top: ${profile.topKeys.length ? profile.topKeys.join(', ') : '(none)'}`);
+
+  if (profile.hints.length) {
+    lines.push('   scalar hints:');
+    profile.hints.forEach((hint) => {
+      lines.push(`     ${hint.key}=${hint.value}`);
+      lines.push(`       ${hint.path}`);
+    });
+  }
+
+  if (profile.renderers.length) {
+    lines.push('   renderer/view-model paths:');
+    profile.renderers.forEach((entry) => {
+      lines.push(`     ${entry.key}`);
+      lines.push(`       ${entry.path}`);
+    });
+  } else {
+    lines.push('   renderer/view-model paths: none in bounded scan');
+  }
+
+  if (profile.signals.length) {
+    lines.push('   ad/masthead/promo-ish signals:');
+    profile.signals.forEach((entry) => {
+      lines.push(`     ${entry.key}  (${entry.valueKind})`);
+      lines.push(`       ${entry.path}`);
+      if (entry.details.length) {
+        lines.push(`       details: ${entry.details.join(', ')}`);
+      }
+      if (entry.nearbyKeys.length) {
+        lines.push(`       nearby: ${entry.nearbyKeys.join(', ')}`);
+      }
+    });
+  }
+
+  if (profile.arrays.length) {
+    lines.push('   notable arrays:');
+    profile.arrays.forEach((entry) => {
+      lines.push(`     [${entry.length}] ${entry.path}`);
+    });
+  }
+
+  lines.push(
+    `   bounded scan: ${profile.visitedNodes}${profile.scanTruncated ? '+' : ''} nodes${
+      profile.scanTruncated ? ' (truncated)' : ''
+    }`,
+    ''
+  );
+}
+
 function formatSnapshot(snapshot) {
   const lines = [
     `build: v${__YTAF_VERSION__}`,
+    `snapshot opened: ${formatClock(new Date().toISOString())}`,
     `responses scanned: ${snapshot.parsedResponses}`,
-    `home responses seen: ${snapshot.homeResponses}`,
+    `responses profiled: ${snapshot.profiledResponses}`,
+    `largest response observed: ${formatChars(snapshot.largestObservedChars)}`,
+    `legacy Home-path matches: ${snapshot.homeResponses}`,
     `responses with known ad markers: ${snapshot.knownMarkerResponses}`,
-    `feed renderers removed: ${snapshot.removedFeedRenderers}`,
+    `known feed renderers removed: ${snapshot.removedFeedRenderers}`,
     `last response observed: ${formatClock(snapshot.lastObservedAt)}`,
     '',
-    'LATEST HOME LEADING SHAPES'
+    '=== 1. RECENT STRUCTURED RESPONSES ===',
+    'Newest bounded response-shape profiles. R numbers correlate with later sections.',
+    ''
   ];
 
-  if (snapshot.homeLeadingShapes.length === 0) {
-    lines.push('none captured yet');
+  if (snapshot.recentResponses.length === 0) {
+    lines.push('none captured yet', '');
   } else {
-    for (const item of snapshot.homeLeadingShapes) {
-      lines.push(`${item.index}. ${item.renderers.join(' > ')}`);
-    }
+    snapshot.recentResponses
+      .slice()
+      .reverse()
+      .forEach((profile, index) => appendResponseProfile(lines, profile, index + 1));
   }
 
-  lines.push('', 'SUSPICIOUS / UNKNOWN KEYS');
-
-  if (snapshot.suspiciousCandidates.length === 0) {
+  lines.push('=== 2. LARGEST PROFILED RESPONSES ===');
+  if (snapshot.largestResponses.length === 0) {
     lines.push('none captured yet');
   } else {
-    snapshot.suspiciousCandidates.forEach((candidate, index) => {
-      lines.push(`${index + 1}. ${candidate.key}  [seen ${candidate.count}]`);
-      lines.push(`   type: ${candidate.valueKind}`);
-      lines.push(`   path: ${candidate.path}`);
+    snapshot.largestResponses.forEach((profile, index) => {
       lines.push(
-        `   nearby: ${
-          candidate.nearbyKeys.length
-            ? candidate.nearbyKeys.join(', ')
-            : '(no sibling keys)'
-        }`
+        `${index + 1}. R${profile.sequence}  ${formatChars(profile.sourceChars)}  ${formatClock(
+          profile.observedAt
+        )}`
       );
+      lines.push(`   top: ${profile.topKeys.length ? profile.topKeys.join(', ') : '(none)'}`);
+      if (profile.hints.length) {
+        lines.push(
+          `   hints: ${profile.hints
+            .slice(0, 6)
+            .map((hint) => `${hint.key}=${hint.value}`)
+            .join(' | ')}`
+        );
+      }
+    });
+  }
+
+  lines.push('', '=== 3. RESPONSE SHAPE COUNTS ===');
+  if (snapshot.responseShapeCounts.length === 0) {
+    lines.push('none captured yet');
+  } else {
+    snapshot.responseShapeCounts.forEach((entry, index) => {
+      lines.push(
+        `${index + 1}. [${entry.count}x, last R${entry.lastSequence}] ${entry.signature}`
+      );
+    });
+  }
+
+  lines.push('', '=== 4. RECENT RENDERER / VIEW-MODEL INVENTORY ===');
+  if (snapshot.rendererInventory.length === 0) {
+    lines.push('none captured yet');
+  } else {
+    snapshot.rendererInventory.forEach((entry, index) => {
+      lines.push(`${index + 1}. ${entry.key}  [seen ${entry.count}, last R${entry.lastSequence}]`);
+      lines.push(`   ${entry.lastPath}`);
+    });
+  }
+
+  lines.push('', '=== 5. AD / MASTHEAD / PROMO SIGNAL INVENTORY ===');
+  if (snapshot.signalInventory.length === 0) {
+    lines.push('none captured yet');
+  } else {
+    snapshot.signalInventory.forEach((entry, index) => {
+      lines.push(
+        `${index + 1}. ${entry.key}  [seen ${entry.count}, last R${entry.lastSequence}]  (${entry.valueKind})`
+      );
+      lines.push(`   ${entry.lastPath}`);
+      if (entry.details?.length) lines.push(`   details: ${entry.details.join(', ')}`);
+    });
+  }
+
+  lines.push('', '=== 6. LEGACY HOME LEADING SHAPES ===');
+  if (snapshot.homeLeadingShapes.length === 0) {
+    lines.push('none captured — this is useful if the current Home schema moved');
+  } else {
+    snapshot.homeLeadingShapes.forEach((item) => {
+      lines.push(`${item.index}. ${item.renderers.join(' > ')}`);
     });
   }
 
   lines.push(
     '',
-    'NOTE',
-    'Only schema/key names and paths are recorded. Payload values are not shown.'
+    '=== NOTE ===',
+    'This DEV build records response structure, key names, object paths, array lengths, and a small allowlist of scalar schema hints.',
+    'Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, and arbitrary payload strings are not retained.',
+    'The diagnostics observer does not block an unknown schema merely because it looks suspicious.'
   );
 
   return lines.join('\n');
