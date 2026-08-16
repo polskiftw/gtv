@@ -2,6 +2,8 @@
 import hashlib
 import html
 import json
+import os
+import re
 from pathlib import Path
 
 from versioning import derive_gtv_version
@@ -13,7 +15,18 @@ PACKAGES = REPO / "packages"
 MANIFESTS = REPO / "manifests"
 ICONS = REPO / "icons"
 DESCRIPTIONS = REPO / "descriptions"
-RAW_BASE = "https://raw.githubusercontent.com/polskiftw/gtv/main/repo"
+
+# GitHub Actions exposes the checked-out branch as GITHUB_REF_NAME. Keep a
+# deterministic main fallback for local builds, while allowing an explicit
+# override for tests or non-Actions builders.
+REPOSITORY_REF = (
+    os.environ.get("GTV_REPOSITORY_REF")
+    or os.environ.get("GITHUB_REF_NAME")
+    or "main"
+)
+if not re.fullmatch(r"[A-Za-z0-9._-]+", REPOSITORY_REF):
+    raise SystemExit(f"unsupported repository ref for raw URLs: {REPOSITORY_REF!r}")
+RAW_BASE = f"https://raw.githubusercontent.com/polskiftw/gtv/{REPOSITORY_REF}/repo"
 
 REPO.mkdir(exist_ok=True)
 PACKAGES.mkdir(exist_ok=True)
