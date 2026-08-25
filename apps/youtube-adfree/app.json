@@ -3,26 +3,25 @@
   "kind": "upstream-patch",
   "id": "youtube.leanback.v4",
   "title": "YouTube AdFree",
-  "version": "5690.5.3",
-  "gtvRevision": 5,
-  "shortDescription": "Development build with blue-button paged schema diagnostics and hardened ad blocking.",
-  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, profiles recent and large structured responses without depending on the legacy Home response path, and presents the frozen diagnostics snapshot as real photograph-sized pages. Blue opens the report and advances one page per press; Back is the only way to close it, avoiding unreliable D-pad scrolling entirely. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
+  "version": "6690.5.3",
+  "gtvRevision": 6,
+  "shortDescription": "Development build with targeted ad-playback and entity diagnostics plus hardened ad blocking.",
+  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening. DEV diagnostics now pin every exact isAdPlayback boolean with its value, response shape, nearest player response, and immediate before/after response summaries; they also name framework payload entity types such as qrCodeEntity and retain only safe schema hints. The broad structural inventories remain available, with camel-case token matching to avoid false ad signals from unrelated keys such as payload, readahead, and adaptiveFormats. Blue opens the frozen paged report and advances one page per press; Back is the only way to close it.",
   "changes": {
     "added": [
-      "Broad response-shape profiling for recent and largest structured YouTube JSON responses, independent of the legacy Home-path detector.",
-      "Session renderer/view-model inventory, ad/masthead/promo signal inventory, response-shape frequency counts, notable array paths, and safe scalar schema hints for on-TV photography.",
-      "Deterministic PAGE X / Y diagnostics pagination sized for photographing the report one screen at a time."
+      "Dedicated AD PLAYBACK EVENTS diagnostics that record the exact isAdPlayback boolean value, object path, top-level response keys, nearest player response, and bounded before/after response summaries.",
+      "Dedicated ENTITY PAYLOAD EVENTS diagnostics that identify named framework payload objects such as qrCodeEntity and preserve safe style/layout hints without retaining arbitrary payload strings.",
+      "Association of later entity updates with the most recently observed ad-playback event so an interactive ad flow can be reconstructed from photographs."
     ],
     "changed": [
-      "Blue now opens diagnostics and advances to the next generated page; after the final page it wraps to page 1.",
-      "Back is the only control that closes the diagnostics overlay, eliminating all dependence on D-pad scrolling.",
-      "Development branding continues to invert the final launcher and Homebrew Channel icon colors for unmistakable visual identification."
+      "Ad/promo signal detection now tokenizes camel-case key names instead of substring-matching, preventing false positives from payload, readahead, adaptiveFormats, and similar unrelated keys.",
+      "The safe scalar-hint allowlist now includes isAdPlayback so its true/false value is visible in response profiles.",
+      "Blue-button photograph-sized pagination and Back-only exit remain unchanged; development branding continues to invert final launcher and Homebrew Channel icon colors."
     ],
     "fixed": [
-      "Diagnostics navigation remaining unusable when YouTube or webOS consumed or ignored D-pad events.",
-      "DEV diagnostics failing to identify Home-like responses when YouTube no longer uses the previously assumed tvBrowseRenderer/tvSurfaceContentRenderer path.",
-      "Sponsored Home masthead and feed ads escaping AdBlock during fresh app loads or alternate response schemas.",
-      "The playback JSON hook so unrelated JSON.stringify calls keep native behavior and avoid unnecessary deep cloning."
+      "DEV diagnostics previously proving that isAdPlayback existed but discarding the boolean value needed to distinguish real ad playback from a negative state notification.",
+      "Generic payload and read-ahead/player-buffer keys polluting the ad/masthead/promo signal inventory because their spelling happened to contain the letters ad.",
+      "Sponsored Home masthead and feed ads escaping the known-renderer filter during fresh app loads or alternate response schemas remain observable without deleting unknown structures blindly."
     ]
   },
   "rootRequired": false,

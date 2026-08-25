@@ -2,7 +2,7 @@
 
 GTV-maintained patch of [`webosbrew/youtube-webos`](https://github.com/webosbrew/youtube-webos), pinned to commit `f1b3b72926bb0cc312b5ceddc6a5b8c8ca081914` (upstream version 0.5.3).
 
-GTV modification date: **2026-08-16**.
+GTV modification date: **2026-08-25**.
 
 The upstream application already provides ad blocking, SponsorBlock, quality controls, and a **Remove Shorts** setting. GTV keeps those features while hardening several response-filtering paths that are brittle in upstream 0.5.3.
 
@@ -34,18 +34,19 @@ GTV also moves the adblock module ahead of `app_api` during userscript initializ
 
 ### DEV on-TV diagnostics
 
-The `dev` branch keeps the same application ID (`youtube.leanback.v4`) and uses the higher GTV version `2690.5.3`, allowing it to replace the release build as an update.
+The `dev` branch keeps the same application ID (`youtube.leanback.v4`) and uses the higher GTV version `6690.5.3`, allowing it to replace the previous diagnostic build as an update.
 
-On the DEV build, the **blue remote button** opens a deliberately minimal full-screen diagnostics snapshot. Press Blue or Back to close it; Up/Down scroll only when the report is longer than the screen. Opening the screen takes a fresh snapshot, so the report does not continuously move while it is being read.
+On the DEV build, the **blue remote button** opens a frozen, full-screen paged diagnostics snapshot. Blue advances exactly one generated page and Back closes it. The report is deliberately sized for photographing one screen at a time.
 
-The report contains:
+DEV diagnostics v4 adds targeted capture for the ad flow observed on a real TV:
 
-- counts for parsed responses, Home responses, known sponsored markers, and feed renderers removed
-- the first few renderer shapes from the most recent recognizable Home response
-- up to ten suspicious or previously unknown ad/promo/masthead-like key names
-- each suspicious key's object path, value type, occurrence count, and a few neighboring key names
+- every exact `isAdPlayback` boolean is pinned with its **true/false value**, object path, top-level response shape, nearest previously observed player response, and a bounded set of responses immediately before and after it
+- framework/update `payload` objects are inspected only for named `*Entity` children such as `qrCodeEntity`; the report records the entity type/path and safe allowlisted hints such as `style`
+- entity events are associated with the most recent `isAdPlayback` event to help reconstruct delayed interactive ad UI such as QR-code side sheets
+- the broad renderer/view-model inventory, response-shape counts, large/recent response profiles, notable arrays, and legacy Home-path clues remain available
+- ad/promo signal matching now tokenizes camel-case names, so unrelated keys such as `payload`, `dynamicReadaheadConfig`, `readAheadGrowthRateMs`, and `adaptiveFormats` no longer appear merely because their spelling contains the letters `ad`
 
-DEV diagnostics never retain or display payload values. They are intended to produce short, human-transcribable schema clues when a new masthead or promotion escapes the release filter.
+The observer remains diagnostic-only for unknown schemas. It does not delete a response merely because it looks ad-like. Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, and arbitrary payload strings are not retained.
 
 Because upstream uses Blue for Audio-Only mode, the DEV build intentionally takes over that key before upstream `ui.js` receives it. The normal upstream configuration screen remains on Green.
 

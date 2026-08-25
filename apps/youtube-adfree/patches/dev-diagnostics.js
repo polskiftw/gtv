@@ -37,6 +37,12 @@ function formatChars(value) {
   return `${value} chars`;
 }
 
+function formatSummary(summary) {
+  if (!summary) return 'none captured';
+  const top = summary.topKeys?.length ? summary.topKeys.join(', ') : '(none)';
+  return `R${summary.sequence} ${formatChars(summary.sourceChars)} ${formatClock(summary.observedAt)} — ${top}`;
+}
+
 function createDiagnosticsPanel() {
   const overlay = document.createElement('div');
   overlay.id = 'gtv-dev-diagnostics';
@@ -56,7 +62,7 @@ function createDiagnosticsPanel() {
   ].join(';');
 
   const title = document.createElement('div');
-  title.textContent = 'GTV DEV DIAGNOSTICS v3';
+  title.textContent = 'GTV DEV DIAGNOSTICS v4';
   title.style.cssText =
     'font-size:34px;font-weight:700;margin:0 0 6px 0;letter-spacing:0.03em';
 
@@ -149,6 +155,49 @@ function responseProfileBlock(profile, index) {
   return lines;
 }
 
+function adPlaybackEventBlock(event, index) {
+  const lines = [
+    `${index}. R${event.sequence}  isAdPlayback=${event.value}  ${formatClock(event.observedAt)}`,
+    `   ${event.path}`,
+    `   top: ${event.topKeys.length ? event.topKeys.join(', ') : '(none)'}`,
+    `   nearest player: ${formatSummary(event.nearestPlayerResponse)}`
+  ];
+
+  if (event.before.length) {
+    lines.push('   immediately before:');
+    event.before.forEach((summary) => lines.push(`     ${formatSummary(summary)}`));
+  }
+
+  if (event.after.length) {
+    lines.push('   immediately after:');
+    event.after.forEach((summary) => lines.push(`     ${formatSummary(summary)}`));
+  }
+
+  lines.push('');
+  return lines;
+}
+
+function entityEventBlock(event, index) {
+  const lines = [
+    `${index}. R${event.sequence}  ${event.key}  ${formatClock(event.observedAt)}`,
+    `   ${event.path}`,
+    `   top: ${event.topKeys.length ? event.topKeys.join(', ') : '(none)'}`
+  ];
+
+  if (event.details.length) {
+    lines.push(`   safe details: ${event.details.join(', ')}`);
+  }
+
+  if (event.latestAdPlayback) {
+    lines.push(
+      `   latest ad-playback event: R${event.latestAdPlayback.sequence} isAdPlayback=${event.latestAdPlayback.value}`
+    );
+  }
+
+  lines.push('');
+  return lines;
+}
+
 function buildReportBlocks(snapshot) {
   const blocks = [];
 
@@ -162,9 +211,44 @@ function buildReportBlocks(snapshot) {
       `legacy Home-path matches: ${snapshot.homeResponses}`,
       `responses with known ad markers: ${snapshot.knownMarkerResponses}`,
       `known feed renderers removed: ${snapshot.removedFeedRenderers}`,
+      `ad-playback events captured: ${snapshot.adPlaybackEvents.length}`,
+      `entity payload events captured: ${snapshot.entityEvents.length}`,
       `last response observed: ${formatClock(snapshot.lastObservedAt)}`,
       '',
-      '=== 1. RECENT STRUCTURED RESPONSES ===',
+      '=== 1. AD PLAYBACK EVENTS ===',
+      'Exact isAdPlayback booleans, their response shape, and nearby response context.',
+      ''
+    ])
+  );
+
+  if (snapshot.adPlaybackEvents.length === 0) {
+    blocks.push(block(['none captured yet', '']));
+  } else {
+    snapshot.adPlaybackEvents
+      .slice()
+      .reverse()
+      .forEach((event, index) => blocks.push(adPlaybackEventBlock(event, index + 1)));
+  }
+
+  blocks.push(
+    block([
+      '=== 2. ENTITY PAYLOAD EVENTS ===',
+      'Named *Entity objects found directly inside framework/update payloads.',
+      ''
+    ])
+  );
+  if (snapshot.entityEvents.length === 0) {
+    blocks.push(block(['none captured yet', '']));
+  } else {
+    snapshot.entityEvents
+      .slice()
+      .reverse()
+      .forEach((event, index) => blocks.push(entityEventBlock(event, index + 1)));
+  }
+
+  blocks.push(
+    block([
+      '=== 3. RECENT STRUCTURED RESPONSES ===',
       'Newest bounded response-shape profiles. R numbers correlate with later sections.',
       ''
     ])
@@ -179,7 +263,7 @@ function buildReportBlocks(snapshot) {
       .forEach((profile, index) => blocks.push(responseProfileBlock(profile, index + 1)));
   }
 
-  blocks.push(block(['=== 2. LARGEST PROFILED RESPONSES ===']));
+  blocks.push(block(['=== 4. LARGEST PROFILED RESPONSES ===']));
   if (snapshot.largestResponses.length === 0) {
     blocks.push(block(['none captured yet', '']));
   } else {
@@ -191,7 +275,7 @@ function buildReportBlocks(snapshot) {
       if (profile.hints.length) {
         lines.push(
           `   hints: ${profile.hints
-            .slice(0, 6)
+            .slice(0, 8)
             .map((hint) => `${hint.key}=${hint.value}`)
             .join(' | ')}`
         );
@@ -201,7 +285,7 @@ function buildReportBlocks(snapshot) {
     });
   }
 
-  blocks.push(block(['=== 3. RESPONSE SHAPE COUNTS ===']));
+  blocks.push(block(['=== 5. RESPONSE SHAPE COUNTS ===']));
   if (snapshot.responseShapeCounts.length === 0) {
     blocks.push(block(['none captured yet', '']));
   } else {
@@ -215,7 +299,7 @@ function buildReportBlocks(snapshot) {
     blocks.push(block(['']));
   }
 
-  blocks.push(block(['=== 4. RECENT RENDERER / VIEW-MODEL INVENTORY ===']));
+  blocks.push(block(['=== 6. RECENT RENDERER / VIEW-MODEL INVENTORY ===']));
   if (snapshot.rendererInventory.length === 0) {
     blocks.push(block(['none captured yet', '']));
   } else {
@@ -230,7 +314,7 @@ function buildReportBlocks(snapshot) {
     blocks.push(block(['']));
   }
 
-  blocks.push(block(['=== 5. AD / MASTHEAD / PROMO SIGNAL INVENTORY ===']));
+  blocks.push(block(['=== 7. AD / MASTHEAD / PROMO SIGNAL INVENTORY ===']));
   if (snapshot.signalInventory.length === 0) {
     blocks.push(block(['none captured yet', '']));
   } else {
@@ -245,9 +329,9 @@ function buildReportBlocks(snapshot) {
     blocks.push(block(['']));
   }
 
-  blocks.push(block(['=== 6. LEGACY HOME LEADING SHAPES ===']));
+  blocks.push(block(['=== 8. LEGACY HOME LEADING SHAPES ===']));
   if (snapshot.homeLeadingShapes.length === 0) {
-    blocks.push(block(['none captured — this is useful if the current Home schema moved', '']));
+    blocks.push(block(['none captured — useful if the current Home schema moved', '']));
   } else {
     snapshot.homeLeadingShapes.forEach((item) => {
       blocks.push(block([`${item.index}. ${item.renderers.join(' > ')}`]));
@@ -258,7 +342,7 @@ function buildReportBlocks(snapshot) {
   blocks.push(
     block([
       '=== NOTE ===',
-      'This DEV build records response structure, key names, object paths, array lengths, and a small allowlist of scalar schema hints.',
+      'DEV v4 records response structure, exact isAdPlayback booleans, named entity payload types, safe schema hints, object paths, and small response-neighborhood summaries.',
       'Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, and arbitrary payload strings are not retained.',
       'The diagnostics observer does not block an unknown schema merely because it looks suspicious.'
     ])
@@ -288,8 +372,6 @@ function paginateBlocks(blocks) {
       currentRows = 0;
     }
 
-    // Very large response blocks may exceed one photo by themselves. Keep the
-    // block intact so paths and their labels are never separated across pages.
     currentLines.push(...lines);
     currentRows += rows;
   });
@@ -355,8 +437,6 @@ function handleKey(evt) {
   return false;
 }
 
-// Blue is the only navigation control inside diagnostics. This deliberately
-// avoids competing with YouTube for D-pad events on webOS. Back alone exits.
 window.addEventListener('keydown', handleKey, true);
 window.addEventListener('keypress', handleKey, true);
 window.addEventListener('keyup', handleKey, true);
