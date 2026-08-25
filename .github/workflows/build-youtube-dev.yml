@@ -18,9 +18,14 @@ on:
       - 'scripts/test-versioning.py'
       - 'scripts/validate-repository.py'
       - 'scripts/versioning.py'
+      - '.github/workflows/build-youtube-dev.yml'
 
 permissions:
   contents: write
+
+concurrency:
+  group: youtube-dev-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
