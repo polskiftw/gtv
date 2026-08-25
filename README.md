@@ -2,9 +2,9 @@
 
 webOS homebrew apps.
 
-`gtv` is a monorepo for webOS homebrew applications, including original projects and maintained patches of existing software. Each application is self-contained and carries its own licensing and attribution.
+`gtv` is a monorepo for maintained webOS homebrew patches. Each application is self-contained and carries its own licensing and attribution.
 
-Current applications include `gnews`, an original four-channel Michiana live-TV launcher, alongside maintained GTV patches of LG App Update Blocker and YouTube AdFree.
+Current applications are maintained GTV patches of LG App Update Blocker and YouTube AdFree.
 
 ## Repository layout
 
@@ -18,8 +18,7 @@ gtv/
 │  │  ├─ LICENSE
 │  │  ├─ README.md
 │  │  ├─ app.json
-│  │  ├─ patches/          # patched upstream apps
-│  │  └─ src/              # original apps, when applicable
+│  │  └─ patches/
 │  └─ ...
 ├─ repo/
 │  ├─ apps.json            # generated Homebrew Channel feed
@@ -34,15 +33,20 @@ gtv/
 │  └─ validate-repository.py
 ├─ .github/
 │  └─ workflows/
-│     └─ build-repository.yml
+│     ├─ build-lg-app-update-blocker.yml
+│     └─ promote-youtube-dev.yml
 └─ README.md
 ```
+
+The old repo-wide build workflow has been retired. Application work is intentionally scoped so an LG App Update Blocker change does not build or test YouTube, and YouTube DEV promotion does not rebuild unrelated applications.
 
 ## Homebrew Channel
 
 The contents of `repo/` are generated from the applications under `apps/`. The generated `apps.json` feed is intended to be added to Homebrew Channel as an external repository, allowing the apps here to be browsed, installed, and updated from the TV UI with their own titles, descriptions, icons, versions, and requirements.
 
 Generated repository files are build outputs. Application source, patch files, metadata, licensing, and attribution live under `apps/`.
+
+`build-repository.py` also prunes generated package, manifest, icon, and description files whose application no longer exists, so retired apps do not linger in the published repository.
 
 ## Patched-app release notes
 
@@ -110,6 +114,6 @@ There is intentionally no blanket license covering every application in this rep
 
 Every directory under `apps/` must contain a `LICENSE` file with the complete applicable license text stored locally in the repository. Link-only license stubs or files that merely say the license is available elsewhere are not accepted.
 
-Patched or derived applications preserve and comply with their upstream licenses, including the full license text and notices from the pinned upstream source. Original applications must likewise include the complete text of their chosen license in their own application directory.
+Patched or derived applications preserve and comply with their upstream licenses, including the full license text and notices from the pinned upstream source.
 
 The `LICENSE` file inside an application directory is authoritative for that application.
