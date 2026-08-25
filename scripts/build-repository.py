@@ -65,9 +65,26 @@ def build_patch_description(metadata: dict[str, object]) -> str:
     return "\n".join(lines) + "\n"
 
 
-packages = []
+metadata_entries: list[tuple[Path, dict[str, object]]] = []
 for metadata_path in sorted(APPS.glob("*/app.json")):
-    metadata = json.loads(metadata_path.read_text())
+    metadata_entries.append((metadata_path, json.loads(metadata_path.read_text())))
+
+valid_slugs = {str(metadata["slug"]) for _, metadata in metadata_entries}
+
+# Generated repository artifacts should exactly mirror the current app set.
+# This prevents removed/retired apps from lingering indefinitely in repo/.
+for directory, suffix in (
+    (PACKAGES, ".ipk"),
+    (MANIFESTS, ".json"),
+    (ICONS, ".png"),
+    (DESCRIPTIONS, ".html"),
+):
+    for path in directory.glob(f"*{suffix}"):
+        if path.stem not in valid_slugs:
+            path.unlink()
+
+packages = []
+for metadata_path, metadata in metadata_entries:
     slug = metadata["slug"]
     ipk = PACKAGES / f"{slug}.ipk"
     if not ipk.exists():
