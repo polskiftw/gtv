@@ -1,8 +1,7 @@
-<p><strong>Added</strong> Broad response-shape profiling for recent and largest structured YouTube JSON responses, independent of the legacy Home-path detector.</p>
-<p><strong>Added</strong> Session renderer/view-model inventory, ad/masthead/promo signal inventory, response-shape frequency counts, notable array paths, and safe scalar schema hints for on-TV photography.</p>
-<p><strong>Added</strong> Deterministic PAGE X / Y diagnostics pagination sized for photographing the report one screen at a time.</p>
-<p><strong>Fixed</strong> Diagnostics navigation remaining unusable when YouTube or webOS consumed or ignored D-pad events.</p>
-<p><strong>Fixed</strong> DEV diagnostics failing to identify Home-like responses when YouTube no longer uses the previously assumed tvBrowseRenderer/tvSurfaceContentRenderer path.</p>
-<p><strong>Fixed</strong> Sponsored Home masthead and feed ads escaping AdBlock during fresh app loads or alternate response schemas.</p>
-<p><strong>Fixed</strong> The playback JSON hook so unrelated JSON.stringify calls keep native behavior and avoid unnecessary deep cloning.</p>
+<p><strong>Added</strong> Dedicated AD PLAYBACK EVENTS diagnostics that record the exact isAdPlayback boolean value, object path, top-level response keys, nearest player response, and bounded before/after response summaries.</p>
+<p><strong>Added</strong> Dedicated ENTITY PAYLOAD EVENTS diagnostics that identify named framework payload objects such as qrCodeEntity and preserve safe style/layout hints without retaining arbitrary payload strings.</p>
+<p><strong>Added</strong> Association of later entity updates with the most recently observed ad-playback event so an interactive ad flow can be reconstructed from photographs.</p>
+<p><strong>Fixed</strong> DEV diagnostics previously proving that isAdPlayback existed but discarding the boolean value needed to distinguish real ad playback from a negative state notification.</p>
+<p><strong>Fixed</strong> Generic payload and read-ahead/player-buffer keys polluting the ad/masthead/promo signal inventory because their spelling happened to contain the letters ad.</p>
+<p><strong>Fixed</strong> Sponsored Home masthead and feed ads escaping the known-renderer filter during fresh app loads or alternate response schemas remain observable without deleting unknown structures blindly.</p>
 <p>Based on <a href="https://github.com/webosbrew/youtube-webos">YouTube webOS 0.5.3</a></p>
