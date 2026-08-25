@@ -7,45 +7,70 @@ import argparse
 import hashlib
 import io
 import os
+import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
 
 
-ARCHIVE_URL = "https://typodermicfonts.com/assets/downloads/typodermic-free-fonts-2026g.zip"
-ARCHIVE_SHA256 = "8998923f5ca62b2587df7124daec34fdd0c14dca460222167efa924f6a72d974"
+DOWNLOADS_URL = "https://typodermicfonts.com/downloads/"
+ARCHIVE_URL = "https://typodermicfonts.com/assets/downloads/typodermic-free-fonts-2026h.zip"
 FONT_MEMBER = "Pricedown Bl.otf"
 FONT_SHA256 = "19f8cd90ce76992c565debe80d167f58e6e1e79a6e0b86f24bd9dce12052b256"
+ARCHIVE_LINK_RE = re.compile(
+    r'href=["\']([^"\']*typodermic-free-fonts-[0-9]+[a-z]\.zip)["\']',
+    re.IGNORECASE,
+)
 
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def download_archive() -> bytes:
+def request_bytes(url: str) -> bytes:
     request = urllib.request.Request(
-        ARCHIVE_URL,
+        url,
         headers={
             "User-Agent": "Mozilla/5.0 (compatible; gtv deterministic icon builder)",
-            "Referer": "https://typodermicfonts.com/downloads/",
+            "Referer": DOWNLOADS_URL,
         },
     )
+    with urllib.request.urlopen(request, timeout=90) as response:
+        return response.read()
+
+
+def discover_current_archive_url() -> str:
+    page = request_bytes(DOWNLOADS_URL).decode("utf-8", errors="replace")
+    match = ARCHIVE_LINK_RE.search(page)
+    if not match:
+        raise RuntimeError("could not discover current Typodermic free-font archive URL")
+    return urllib.parse.urljoin(DOWNLOADS_URL, match.group(1))
+
+
+def download_archive() -> bytes:
     last_error: Exception | None = None
+    urls = [ARCHIVE_URL]
+
     for attempt in range(3):
         try:
-            with urllib.request.urlopen(request, timeout=90) as response:
-                data = response.read()
-            digest = sha256(data)
-            if digest != ARCHIVE_SHA256:
-                raise RuntimeError(f"unexpected Typodermic archive hash: {digest}")
-            return data
+            url = urls[-1]
+            return request_bytes(url)
         except (OSError, urllib.error.URLError) as error:
             last_error = error
+            if attempt == 0:
+                try:
+                    discovered = discover_current_archive_url()
+                    if discovered not in urls:
+                        urls.append(discovered)
+                except (OSError, urllib.error.URLError, RuntimeError) as discovery_error:
+                    last_error = discovery_error
             if attempt < 2:
                 time.sleep(2**attempt)
-    raise RuntimeError(f"could not download pinned Typodermic font archive: {last_error}")
+
+    raise RuntimeError(f"could not download Typodermic font archive: {last_error}")
 
 
 def extract_font(archive: bytes) -> bytes:
@@ -56,7 +81,10 @@ def extract_font(archive: bytes) -> bytes:
                 raise RuntimeError(f"expected exactly one {FONT_MEMBER!r} in Typodermic archive")
             font = bundle.read(FONT_MEMBER)
     except zipfile.BadZipFile as error:
-        raise RuntimeError("pinned Typodermic archive is not a valid ZIP") from error
+        raise RuntimeError("Typodermic archive is not a valid ZIP") from error
+
+    # The archive filename/version is allowed to move; the actual font bytes are
+    # still pinned so a changed upstream font cannot silently alter GTV artwork.
     digest = sha256(font)
     if digest != FONT_SHA256:
         raise RuntimeError(f"unexpected Pricedown Black font hash: {digest}")
