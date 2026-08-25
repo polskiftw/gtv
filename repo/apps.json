@@ -50,9 +50,9 @@
         "rootRequired": true,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "94fa13edb94243b7be4a6ae042900f3c8e4f9a40d89aaa475a872f2b4e6713a2"
+          "sha256": "5d050b53c4ef03f1890b5934b81af610fcad53e999629cbe535bedf2b893c9c6"
         },
-        "ipkSize": 110420
+        "ipkSize": 110410
       },
       "pool": "main",
       "requirements": {
@@ -68,22 +68,22 @@
       "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/youtube-adfree.json",
       "manifest": {
         "id": "youtube.leanback.v4",
-        "version": "5690.5.3",
+        "version": "6690.5.3",
         "type": "web",
         "title": "YouTube AdFree",
-        "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening, profiles recent and large structured responses without depending on the legacy Home response path, and presents the frozen diagnostics snapshot as real photograph-sized pages. Blue opens the report and advances one page per press; Back is the only way to close it, avoiding unreliable D-pad scrolling entirely. The report captures top-level response shapes, renderer/view-model paths, ad/masthead/promo signal keys, notable arrays, response-shape counts, and a small allowlist of safe scalar schema hints while excluding tracking/auth/token/URL payload data.",
+        "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening. DEV diagnostics now pin every exact isAdPlayback boolean with its value, response shape, nearest player response, and immediate before/after response summaries; they also name framework payload entity types such as qrCodeEntity and retain only safe schema hints. The broad structural inventories remain available, with camel-case token matching to avoid false ad signals from unrelated keys such as payload, readahead, and adaptiveFormats. Blue opens the frozen paged report and advances one page per press; Back is the only way to close it.",
         "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/youtube-adfree.png",
         "sourceUrl": "https://github.com/webosbrew/youtube-webos",
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "807f53a4a9b95b123259b1354ea67825bf36cbd5de9bab2af4fc16999318eadc"
+          "sha256": "7857492bab36d8eb01e27a06aa4359a629d6ef617ee48ababa6f1fce866ea38f"
         },
-        "ipkSize": 518148
+        "ipkSize": 523664
       },
       "pool": "main",
       "requirements": {},
-      "shortDescription": "Development build with blue-button paged schema diagnostics and hardened ad blocking.",
+      "shortDescription": "Development build with targeted ad-playback and entity diagnostics plus hardened ad blocking.",
       "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/descriptions/youtube-adfree.html"
     }
   ]
