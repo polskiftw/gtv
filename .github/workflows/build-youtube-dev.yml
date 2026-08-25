@@ -1,0 +1,123 @@
+name: Build YouTube DEV
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - 'apps/youtube-adfree/**'
+      - 'branding/**'
+      - 'scripts/badge_finish.py'
+      - 'scripts/build-repository.py'
+      - 'scripts/build-smart-icon.py'
+      - 'scripts/icon_sources.py'
+      - 'scripts/prepare-branding-font.py'
+      - 'scripts/smart_badge.py'
+      - 'scripts/test-icon-sources.py'
+      - 'scripts/test-smart-icon.py'
+      - 'scripts/test-versioning.py'
+      - 'scripts/validate-repository.py'
+      - 'scripts/versioning.py'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out DEV
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: branding/requirements.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install branding dependencies
+        run: python -m pip install --disable-pip-version-check -r branding/requirements.txt
+
+      - name: Prepare verified Pricedown Black font
+        shell: bash
+        run: |
+          set -euo pipefail
+          FONT_PATH="$RUNNER_TEMP/gtv-fonts/Pricedown Bl.otf"
+          python scripts/prepare-branding-font.py --output "$FONT_PATH"
+          echo "GTV_PRICEDOWN_FONT=$FONT_PATH" >> "$GITHUB_ENV"
+
+      - name: Test shared branding/version helpers
+        run: |
+          python scripts/test-smart-icon.py
+          python scripts/test-icon-sources.py
+          python scripts/test-versioning.py
+
+      - name: Test YouTube patches
+        run: |
+          node apps/youtube-adfree/tests/test-feed-ad-filter.mjs apps/youtube-adfree/patches/feed-ad-filter.js
+          node apps/youtube-adfree/tests/test-dev-diagnostics.mjs apps/youtube-adfree/patches/feed-ad-filter.js apps/youtube-adfree/patches/dev-diagnostics.js
+          node apps/youtube-adfree/tests/test-shorts-filter.mjs apps/youtube-adfree/patches/shorts-filter.js
+          node apps/youtube-adfree/tests/test-playback-overlay-filter.mjs apps/youtube-adfree/patches/playback-overlay-filter.js
+          node --experimental-strip-types apps/youtube-adfree/tests/test-json-stringify-hook.mjs apps/youtube-adfree/patches/json-stringify.ts
+
+      - name: Build YouTube DEV only
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_DIR="$GITHUB_WORKSPACE/apps/youtube-adfree"
+          SRC="$RUNNER_TEMP/youtube-webos"
+          rm -rf "$SRC"
+
+          git clone https://github.com/webosbrew/youtube-webos.git "$SRC"
+          git -C "$SRC" checkout f1b3b72926bb0cc312b5ceddc6a5b8c8ca081914
+          cp "$SRC/LICENSE" "$APP_DIR/LICENSE"
+
+          python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
+          node "$APP_DIR/tests/test-feed-ad-filter.mjs" "$SRC/src/feed-ad-filter.js"
+          node "$APP_DIR/tests/test-dev-diagnostics.mjs" "$SRC/src/feed-ad-filter.js" "$SRC/src/dev-diagnostics.js"
+          node "$APP_DIR/tests/test-adblock-integration.mjs" "$SRC/src/adblock.js" "$SRC/src/userScript.ts"
+          node "$APP_DIR/tests/test-shorts-filter.mjs" "$SRC/src/shorts-filter.js"
+          node "$APP_DIR/tests/test-playback-overlay-filter.mjs" "$SRC/src/playback-overlay-filter.js"
+          node --experimental-strip-types "$APP_DIR/tests/test-json-stringify-hook.mjs" "$SRC/src/hooks/json-stringify.ts"
+          python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
+            --metadata "$APP_DIR/app.json" \
+            --source "$SRC" \
+            --repository-icon "$GITHUB_WORKSPACE/repo/icons/youtube-adfree.png"
+
+          cd "$SRC"
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm run lint:tsc
+          pnpm run build
+          pnpm run test:compat
+          pnpm run package
+
+          mkdir -p "$GITHUB_WORKSPACE/repo/packages"
+          IPK=$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)
+          test -n "$IPK"
+          cp "$IPK" "$GITHUB_WORKSPACE/repo/packages/youtube-adfree.ipk"
+
+      - name: Generate and validate Homebrew feed
+        run: |
+          python3 scripts/build-repository.py
+          python scripts/validate-repository.py
+
+      - name: Publish YouTube DEV outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add repo/ apps/youtube-adfree/LICENSE
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Build YouTube DEV'
+          git push
