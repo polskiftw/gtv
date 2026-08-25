@@ -1,39 +1,13 @@
 {
   "paging": {
     "page": 1,
-    "count": 3,
+    "count": 2,
     "maxPage": 1,
-    "itemsTotal": 3,
+    "itemsTotal": 2,
     "prevUrl": null,
     "nextUrl": null
   },
   "packages": [
-    {
-      "id": "com.gtv.gnews",
-      "title": "gnews",
-      "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/gnews.png",
-      "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/manifests/gnews.json",
-      "manifest": {
-        "id": "com.gtv.gnews",
-        "version": "1.0.2",
-        "type": "web",
-        "title": "gnews",
-        "appDescription": "A deliberately tiny TV-first launcher for ABC57, WSBT 22, WNDU 16 News Now, and ROAR. Use the remote arrows to choose a tile, press OK to watch, and press Back to return to the same tile.",
-        "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/gnews.png",
-        "sourceUrl": "https://github.com/polskiftw/gtv/tree/main/apps/gnews",
-        "rootRequired": false,
-        "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/gnews.ipk",
-        "ipkHash": {
-          "sha256": "270cd01003ef26b9be0a101dadbb241656c6b392d7e92ef2a286921ad003a5ac"
-        },
-        "ipkSize": 166778
-      },
-      "pool": "main",
-      "requirements": {
-        "webosRelease": ">=5.0"
-      },
-      "shortDescription": "Four-button access to Michiana local news and ROAR."
-    },
     {
       "id": "org.webosbrew.appupdateblocker",
       "title": "LG App Update Blocker",
@@ -77,9 +51,9 @@
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "7857492bab36d8eb01e27a06aa4359a629d6ef617ee48ababa6f1fce866ea38f"
+          "sha256": "3cd72782c428cb419212d352f1aca2e990bae37aa7e318921adb9d0bdb983669"
         },
-        "ipkSize": 523664
+        "ipkSize": 523666
       },
       "pool": "main",
       "requirements": {},
