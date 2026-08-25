@@ -1,4 +1,4 @@
-# Intentionally app-scoped: this workflow must never build unrelated applications.
+# App-scoped by design: this workflow never builds unrelated applications.
 name: Build YouTube DEV
 
 on:
