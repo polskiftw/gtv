@@ -1,3 +1,4 @@
+# Intentionally app-scoped: this workflow must never build unrelated applications.
 name: Build YouTube DEV
 
 on:
