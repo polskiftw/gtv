@@ -28,6 +28,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: branding/requirements.txt
+
+      - name: Install feed validation dependencies
+        run: python -m pip install --disable-pip-version-check -r branding/requirements.txt
 
       - name: Stage YouTube DEV package and metadata
         shell: bash
