@@ -2,12 +2,22 @@ name: Promote YouTube DEV build
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ['Build YouTube DEV']
+    types: [completed]
 
 permissions:
   contents: write
 
+concurrency:
+  group: promote-youtube-dev
+  cancel-in-progress: true
+
 jobs:
   promote:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev')
     runs-on: ubuntu-latest
 
     steps:
