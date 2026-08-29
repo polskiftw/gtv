@@ -42,22 +42,22 @@
       "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/manifests/youtube-adfree.json",
       "manifest": {
         "id": "youtube.leanback.v4",
-        "version": "9690.5.3",
+        "version": "10690.5.3",
         "type": "web",
         "title": "YouTube AdFree",
-        "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 9 retires the ineffective standalone isAdPlayback=true mutation while retaining isAdPlayback observation, upgrades the on-TV report to diagnostics v6 with privacy-safe outbound playback-request instrumentation for isInlinePlaybackNoAd, and broadens Remove Shorts handling for direct renderer/view-model reel navigation, direct Shorts content/style enums, and Shorts startup behaviours. Every Shorts removal remains controlled by the existing Remove Shorts setting.",
+        "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 10 keeps diagnostics v6 and the revision 9 Shorts improvements, but now uses the exact isAdPlayback=true response as a high-confidence trigger for guarded player-level skipping of server-side ad items. The response boolean is not mutated; instead the current ad player is briefly hidden while GTV seeks the ad item to its own duration, with an HTMLVideoElement fallback when the player API is unavailable. Every Shorts removal remains controlled by the existing Remove Shorts setting.",
         "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/youtube-adfree.png",
         "sourceUrl": "https://github.com/webosbrew/youtube-webos",
         "rootRequired": false,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/youtube-adfree.ipk",
         "ipkHash": {
-          "sha256": "eb8ab31a1c22977468129150ff781d505e312f0ca97b1791cf460b12faf4adf4"
+          "sha256": "72e348584193c1673954d70b505c3122f6d7fc675e215a2ed7e997a0bb03efbf"
         },
-        "ipkSize": 531898
+        "ipkSize": 536548
       },
       "pool": "main",
       "requirements": {},
-      "shortDescription": "Development build with playback-request diagnostics and broader Shorts removal.",
+      "shortDescription": "Development build with server-side ad skipping and playback diagnostics.",
       "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/descriptions/youtube-adfree.html"
     }
   ]
