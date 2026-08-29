@@ -1,8 +1,11 @@
+import { recordPlaybackRequestSerialization } from '../playback-request-diagnostics.js';
+
 type JsonRecord = Record<string, unknown>;
 type FunctionReplacer = (this: unknown, key: string, value: unknown) => unknown;
 type WhitelistReplacer = (string | number)[] | null;
 
 const INLINE_PLAYBACK_NO_AD_KEY = 'isInlinePlaybackNoAd';
+const SERIALIZED_INLINE_NO_AD = '"isInlinePlaybackNoAd":true';
 
 function isObjectRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -24,6 +27,33 @@ function getOwnDataProperty(value: unknown, key: string): unknown {
   }
 
   return descriptor.value;
+}
+
+function ownFlagState(value: unknown, key: string): string {
+  if (!isObjectRecord(value)) return 'missing';
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (!descriptor) return 'missing';
+  if (!Object.prototype.hasOwnProperty.call(descriptor, 'value')) return 'accessor';
+  if (descriptor.value === true) return 'true';
+  if (descriptor.value === false) return 'false';
+  return 'other';
+}
+
+function inspectPlaybackRequest(value: unknown) {
+  if (!isPlainRecord(value)) return null;
+  const playbackContext = getOwnDataProperty(value, 'playbackContext');
+  if (!isPlainRecord(playbackContext)) return null;
+  const contentPlaybackContext = getOwnDataProperty(
+    playbackContext,
+    'contentPlaybackContext'
+  );
+  if (!isPlainRecord(contentPlaybackContext)) return null;
+
+  return {
+    rootKeys: Object.keys(value).slice(0, 12),
+    contentKeys: Object.keys(contentPlaybackContext).slice(0, 12),
+    flagBefore: ownFlagState(contentPlaybackContext, INLINE_PLAYBACK_NO_AD_KEY)
+  };
 }
 
 function cloneRecordWithProperty(
@@ -112,6 +142,15 @@ function ensureInlinePlaybackNoAd(value: unknown): unknown {
   }
 }
 
+function flagStateAfterPatch(value: unknown): string {
+  const playbackContext = getOwnDataProperty(value, 'playbackContext');
+  const contentPlaybackContext = getOwnDataProperty(
+    playbackContext,
+    'contentPlaybackContext'
+  );
+  return ownFlagState(contentPlaybackContext, INLINE_PLAYBACK_NO_AD_KEY);
+}
+
 const originalStringify = JSON.stringify;
 
 function stringify(
@@ -119,12 +158,26 @@ function stringify(
   replacer?: FunctionReplacer | WhitelistReplacer,
   space?: string | number
 ): string {
+  const requestInspection = inspectPlaybackRequest(value);
   const patchedValue = ensureInlinePlaybackNoAd(value);
   if (patchedValue !== value) {
     console.info('[JSON.stringify] Applied inline playback no-ad flag');
   }
 
-  return originalStringify(patchedValue, replacer as never, space);
+  const serialized = originalStringify(patchedValue, replacer as never, space);
+
+  if (requestInspection) {
+    recordPlaybackRequestSerialization({
+      ...requestInspection,
+      patchApplied: patchedValue !== value,
+      flagAfter: flagStateAfterPatch(patchedValue),
+      serializedConfirmed:
+        typeof serialized === 'string' && serialized.includes(SERIALIZED_INLINE_NO_AD),
+      serializedChars: typeof serialized === 'string' ? serialized.length : 0
+    });
+  }
+
+  return serialized;
 }
 
 JSON.stringify = stringify;

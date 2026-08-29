@@ -1,6 +1,7 @@
 /* global __YTAF_VERSION__ */
 import { getFeedAdDiagnosticsSnapshot } from './feed-ad-filter';
 import { getShortsDiagnosticsSnapshot } from './shorts-filter';
+import { getPlaybackRequestDiagnosticsSnapshot } from './playback-request-diagnostics';
 
 const BLUE_CODES = new Set([406, 167, 191]);
 const WEBOS_BACK_CODES = new Set([461, 27]);
@@ -63,7 +64,7 @@ function createDiagnosticsPanel() {
   ].join(';');
 
   const title = document.createElement('div');
-  title.textContent = 'GTV DEV DIAGNOSTICS v5';
+  title.textContent = 'GTV DEV DIAGNOSTICS v6';
   title.style.cssText =
     'font-size:34px;font-weight:700;margin:0 0 6px 0;letter-spacing:0.03em';
 
@@ -156,6 +157,19 @@ function responseProfileBlock(profile, index) {
   return lines;
 }
 
+function playbackRequestBlock(entry, index) {
+  return [
+    `${index}. P${entry.sequence}  ${formatClock(entry.observedAt)}  ${formatChars(entry.serializedChars)}`,
+    `   flag before: ${entry.flagBefore}`,
+    `   copy-on-write patch applied: ${entry.patchApplied}`,
+    `   flag after: ${entry.flagAfter}`,
+    `   final serialized body confirms true: ${entry.serializedConfirmed}`,
+    `   root keys: ${entry.rootKeys.length ? entry.rootKeys.join(', ') : '(none)'}`,
+    `   contentPlaybackContext keys: ${entry.contentKeys.length ? entry.contentKeys.join(', ') : '(none)'}`,
+    ''
+  ];
+}
+
 function adPlaybackEventBlock(event, index) {
   const lines = [
     `${index}. R${event.sequence}  isAdPlayback=${event.value}  ${formatClock(event.observedAt)}`,
@@ -199,7 +213,7 @@ function entityEventBlock(event, index) {
   return lines;
 }
 
-function buildReportBlocks(snapshot, shortsSnapshot) {
+function buildReportBlocks(snapshot, shortsSnapshot, requestSnapshot) {
   const blocks = [];
 
   blocks.push(
@@ -213,14 +227,37 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
       `responses with known ad markers: ${snapshot.knownMarkerResponses}`,
       `known feed renderers removed: ${snapshot.removedFeedRenderers}`,
       `ad-playback events captured: ${snapshot.adPlaybackEvents.length}`,
-      `entity payload events captured: ${snapshot.entityEvents.length}`,
+      `playback request candidates: ${requestSnapshot.playbackCandidates}`,
+      `no-ad patches applied: ${requestSnapshot.patchesApplied}`,
+      `serialized no-ad=true confirmed: ${requestSnapshot.serializedConfirmed}`,
       `Shorts responses filtered: ${shortsSnapshot.responsesScanned}`,
       `known Shorts removed: ${shortsSnapshot.removedKnown}`,
       `Shorts-like survivors observed: ${shortsSnapshot.suspiciousSurvivors}`,
       `last response observed: ${formatClock(snapshot.lastObservedAt)}`,
-      '',
-      '=== 1. AD PLAYBACK EVENTS ===',
-      'Exact isAdPlayback booleans, their response shape, and nearby response context.',
+      ''
+    ])
+  );
+
+  blocks.push(
+    block([
+      '=== 1. PLAYBACK REQUEST DIAGNOSTICS ===',
+      'Safe structure around outbound playbackContext serialization. No video IDs, URLs, tokens, tracking values, or request bodies are retained.',
+      ''
+    ])
+  );
+  if (requestSnapshot.recentRequests.length === 0) {
+    blocks.push(block(['none captured yet', '']));
+  } else {
+    requestSnapshot.recentRequests
+      .slice()
+      .reverse()
+      .forEach((entry, index) => blocks.push(playbackRequestBlock(entry, index + 1)));
+  }
+
+  blocks.push(
+    block([
+      '=== 2. AD PLAYBACK EVENTS ===',
+      'Exact isAdPlayback booleans, their response shape, and nearby response context. These are observed only; DEV no longer mutates them.',
       ''
     ])
   );
@@ -236,7 +273,7 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
 
   blocks.push(
     block([
-      '=== 2. ENTITY PAYLOAD EVENTS ===',
+      '=== 3. ENTITY PAYLOAD EVENTS ===',
       'Named *Entity objects found directly inside framework/update payloads.',
       ''
     ])
@@ -252,7 +289,7 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
 
   blocks.push(
     block([
-      '=== 3. SHORTS SURVIVOR DIAGNOSTICS ===',
+      '=== 4. SHORTS SURVIVOR DIAGNOSTICS ===',
       'Shorts/reel schema clues found inside array entries that the known classifier intentionally kept.',
       `filter runs: ${shortsSnapshot.responsesScanned}  •  known removed: ${shortsSnapshot.removedKnown}  •  suspicious survivors: ${shortsSnapshot.suspiciousSurvivors}`,
       ''
@@ -293,7 +330,7 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
 
   blocks.push(
     block([
-      '=== 4. RECENT STRUCTURED RESPONSES ===',
+      '=== 5. RECENT STRUCTURED RESPONSES ===',
       'Newest bounded response-shape profiles. R numbers correlate with later sections.',
       ''
     ])
@@ -308,7 +345,7 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
       .forEach((profile, index) => blocks.push(responseProfileBlock(profile, index + 1)));
   }
 
-  blocks.push(block(['=== 5. LARGEST PROFILED RESPONSES ===']));
+  blocks.push(block(['=== 6. LARGEST PROFILED RESPONSES ===']));
   if (snapshot.largestResponses.length === 0) {
     blocks.push(block(['none captured yet', '']));
   } else {
@@ -330,7 +367,7 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
     });
   }
 
-  blocks.push(block(['=== 6. RESPONSE SHAPE COUNTS ===']));
+  blocks.push(block(['=== 7. RESPONSE SHAPE COUNTS ===']));
   if (snapshot.responseShapeCounts.length === 0) {
     blocks.push(block(['none captured yet', '']));
   } else {
@@ -344,7 +381,7 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
     blocks.push(block(['']));
   }
 
-  blocks.push(block(['=== 7. RECENT RENDERER / VIEW-MODEL INVENTORY ===']));
+  blocks.push(block(['=== 8. RECENT RENDERER / VIEW-MODEL INVENTORY ===']));
   if (snapshot.rendererInventory.length === 0) {
     blocks.push(block(['none captured yet', '']));
   } else {
@@ -359,7 +396,7 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
     blocks.push(block(['']));
   }
 
-  blocks.push(block(['=== 8. AD / MASTHEAD / PROMO SIGNAL INVENTORY ===']));
+  blocks.push(block(['=== 9. AD / MASTHEAD / PROMO SIGNAL INVENTORY ===']));
   if (snapshot.signalInventory.length === 0) {
     blocks.push(block(['none captured yet', '']));
   } else {
@@ -374,7 +411,7 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
     blocks.push(block(['']));
   }
 
-  blocks.push(block(['=== 9. LEGACY HOME LEADING SHAPES ===']));
+  blocks.push(block(['=== 10. LEGACY HOME LEADING SHAPES ===']));
   if (snapshot.homeLeadingShapes.length === 0) {
     blocks.push(block(['none captured — useful if the current Home schema moved', '']));
   } else {
@@ -387,9 +424,9 @@ function buildReportBlocks(snapshot, shortsSnapshot) {
   blocks.push(
     block([
       '=== NOTE ===',
-      'DEV v5 adds safe Shorts/reel survivor clues to the existing ad-playback, entity, response-shape, and renderer diagnostics.',
-      'Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, titles, and arbitrary payload strings are not retained.',
-      'Unknown Shorts-like schemas are reported but are not deleted blindly.'
+      'DEV v6 retires the failed standalone isAdPlayback mutation and adds outbound playback-request flag diagnostics.',
+      'Shorts filtering remains controlled by the existing Remove Shorts setting; direct reel-navigation forms are now recognized while unknown forms remain report-only.',
+      'Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, titles, video IDs, and arbitrary payload strings are not retained.'
     ])
   );
 
@@ -435,7 +472,11 @@ function renderPage() {
 
 function openDiagnostics() {
   pages = paginateBlocks(
-    buildReportBlocks(getFeedAdDiagnosticsSnapshot(), getShortsDiagnosticsSnapshot())
+    buildReportBlocks(
+      getFeedAdDiagnosticsSnapshot(),
+      getShortsDiagnosticsSnapshot(),
+      getPlaybackRequestDiagnosticsSnapshot()
+    )
   );
   currentPage = 0;
   visible = true;

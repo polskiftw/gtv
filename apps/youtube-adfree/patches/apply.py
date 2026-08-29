@@ -63,7 +63,6 @@ adblock = adblock.replace(
     adblock_import,
     adblock_import
     + "import { removeSponsoredFeedAds } from './feed-ad-filter';\n"
-    + "import { neutralizeStandaloneAdPlayback } from './ad-playback-state-filter';\n"
     + "import { removeSponsoredPlaybackOverlays } from './playback-overlay-filter';\n",
     1,
 )
@@ -84,10 +83,6 @@ adblock = (
     + "  const removedFeedAds = removeSponsoredFeedAds(r, arguments[0]);\n"
     + "  if (removedFeedAds) {\n"
     + "    console.info(`[adblock] Removed ${removedFeedAds} sponsored feed renderer(s)`);\n"
-    + "  }\n\n"
-    + "  const neutralizedAdPlayback = neutralizeStandaloneAdPlayback(r);\n"
-    + "  if (neutralizedAdPlayback) {\n"
-    + "    console.info('[adblock] Neutralized standalone isAdPlayback=true response');\n"
     + "  }\n\n"
     + adblock[feed_end:]
 )
@@ -142,8 +137,11 @@ config_path.write_text(config.replace(old_description, new_description, 1), enco
 shutil.copy2(patches / "shorts.js", source / "src" / "shorts.js")
 shutil.copy2(patches / "shorts-filter.js", source / "src" / "shorts-filter.js")
 shutil.copy2(patches / "feed-ad-filter.js", source / "src" / "feed-ad-filter.js")
-shutil.copy2(patches / "ad-playback-state-filter.js", source / "src" / "ad-playback-state-filter.js")
 shutil.copy2(patches / "playback-overlay-filter.js", source / "src" / "playback-overlay-filter.js")
+shutil.copy2(
+    patches / "playback-request-diagnostics.js",
+    source / "src" / "playback-request-diagnostics.js",
+)
 shutil.copy2(patches / "json-stringify.ts", json_stringify_path)
 shutil.copy2(patches / "dev-diagnostics.js", source / "src" / "dev-diagnostics.js")
 

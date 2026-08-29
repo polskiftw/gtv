@@ -69,10 +69,9 @@ jobs:
         run: |
           node apps/youtube-adfree/tests/test-feed-ad-filter.mjs apps/youtube-adfree/patches/feed-ad-filter.js
           node apps/youtube-adfree/tests/test-dev-diagnostics.mjs apps/youtube-adfree/patches/feed-ad-filter.js apps/youtube-adfree/patches/dev-diagnostics.js
-          node apps/youtube-adfree/tests/test-ad-playback-state-filter.mjs apps/youtube-adfree/patches/ad-playback-state-filter.js
           node apps/youtube-adfree/tests/test-shorts-filter.mjs apps/youtube-adfree/patches/shorts-filter.js
           node apps/youtube-adfree/tests/test-playback-overlay-filter.mjs apps/youtube-adfree/patches/playback-overlay-filter.js
-          node --experimental-strip-types apps/youtube-adfree/tests/test-json-stringify-hook.mjs apps/youtube-adfree/patches/json-stringify.ts
+          node --experimental-strip-types apps/youtube-adfree/tests/test-json-stringify-hook.mjs apps/youtube-adfree/patches/json-stringify.ts apps/youtube-adfree/patches/playback-request-diagnostics.js
 
       - name: Build YouTube DEV only
         shell: bash
@@ -89,11 +88,10 @@ jobs:
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
           node "$APP_DIR/tests/test-feed-ad-filter.mjs" "$SRC/src/feed-ad-filter.js"
           node "$APP_DIR/tests/test-dev-diagnostics.mjs" "$SRC/src/feed-ad-filter.js" "$SRC/src/dev-diagnostics.js"
-          node "$APP_DIR/tests/test-ad-playback-state-filter.mjs" "$SRC/src/ad-playback-state-filter.js"
           node "$APP_DIR/tests/test-adblock-integration.mjs" "$SRC/src/adblock.js" "$SRC/src/userScript.ts"
           node "$APP_DIR/tests/test-shorts-filter.mjs" "$SRC/src/shorts-filter.js"
           node "$APP_DIR/tests/test-playback-overlay-filter.mjs" "$SRC/src/playback-overlay-filter.js"
-          node --experimental-strip-types "$APP_DIR/tests/test-json-stringify-hook.mjs" "$SRC/src/hooks/json-stringify.ts"
+          node --experimental-strip-types "$APP_DIR/tests/test-json-stringify-hook.mjs" "$SRC/src/hooks/json-stringify.ts" "$SRC/src/playback-request-diagnostics.js"
           python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
             --metadata "$APP_DIR/app.json" \
             --source "$SRC" \

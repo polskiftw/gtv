@@ -1,20 +1,31 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import os from 'node:os';
+import { copyFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const sourcePath = process.argv[2];
-if (!sourcePath) {
-  throw new Error('usage: test-json-stringify-hook.mjs <hook-source>');
+const diagnosticsSourcePath = process.argv[3];
+if (!sourcePath || !diagnosticsSourcePath) {
+  throw new Error('usage: test-json-stringify-hook.mjs <hook-source> <request-diagnostics-source>');
 }
 
 const originalStringify = JSON.stringify;
 const originalInfo = console.info;
+const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'gtv-json-hook-'));
 
 try {
   console.info = () => {};
-  const sourceUrl = pathToFileURL(path.resolve(sourcePath));
+  await mkdir(path.join(tempRoot, 'hooks'), { recursive: true });
+  const stagedHook = path.join(tempRoot, 'hooks', 'json-stringify.ts');
+  const stagedDiagnostics = path.join(tempRoot, 'playback-request-diagnostics.js');
+  await copyFile(path.resolve(sourcePath), stagedHook);
+  await copyFile(path.resolve(diagnosticsSourcePath), stagedDiagnostics);
+
+  const sourceUrl = pathToFileURL(stagedHook);
   sourceUrl.searchParams.set('testRun', `${Date.now()}`);
   await import(sourceUrl.href);
+  const diagnosticsModule = await import(pathToFileURL(stagedDiagnostics).href);
 
   const unrelated = { a: 1, f() {} };
   assert.equal(originalStringify(unrelated), '{"a":1}');
@@ -38,22 +49,24 @@ try {
   });
 
   const serialized = JSON.parse(JSON.stringify(payload));
+  assert.equal(serialized.playbackContext.contentPlaybackContext.signatureTimestamp, 123);
+  assert.equal(serialized.playbackContext.contentPlaybackContext.isInlinePlaybackNoAd, true);
   assert.equal(
-    serialized.playbackContext.contentPlaybackContext.signatureTimestamp,
-    123
-  );
-  assert.equal(
-    serialized.playbackContext.contentPlaybackContext.isInlinePlaybackNoAd,
-    true
-  );
-  assert.equal(
-    Object.prototype.hasOwnProperty.call(
-      contentPlaybackContext,
-      'isInlinePlaybackNoAd'
-    ),
+    Object.prototype.hasOwnProperty.call(contentPlaybackContext, 'isInlinePlaybackNoAd'),
     false,
     'hook must not mutate caller-owned playback context'
   );
+
+  let requestSnapshot = diagnosticsModule.getPlaybackRequestDiagnosticsSnapshot();
+  assert.equal(requestSnapshot.playbackCandidates, 1);
+  assert.equal(requestSnapshot.patchesApplied, 1);
+  assert.equal(requestSnapshot.serializedConfirmed, 1);
+  assert.equal(requestSnapshot.recentRequests[0].flagBefore, 'missing');
+  assert.equal(requestSnapshot.recentRequests[0].flagAfter, 'true');
+  assert.equal(requestSnapshot.recentRequests[0].serializedConfirmed, true);
+  assert.ok(requestSnapshot.recentRequests[0].rootKeys.includes('playbackContext'));
+  assert.ok(requestSnapshot.recentRequests[0].contentKeys.includes('signatureTimestamp'));
+  assert.equal(JSON.stringify(requestSnapshot).includes('123'), false, 'diagnostics must not retain scalar request values');
 
   const explicitlyEnabled = Object.freeze({
     playbackContext: Object.freeze({
@@ -107,10 +120,22 @@ try {
     key === 'signatureTimestamp' ? 456 : value
   );
   assert.equal(
-    JSON.parse(functionReplacerOutput).playbackContext.contentPlaybackContext
-      .signatureTimestamp,
+    JSON.parse(functionReplacerOutput).playbackContext.contentPlaybackContext.signatureTimestamp,
     456
   );
+
+  const stripsFlagOutput = JSON.stringify(payload, (key, value) =>
+    key === 'isInlinePlaybackNoAd' ? undefined : value
+  );
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      JSON.parse(stripsFlagOutput).playbackContext.contentPlaybackContext,
+      'isInlinePlaybackNoAd'
+    ),
+    false
+  );
+  requestSnapshot = diagnosticsModule.getPlaybackRequestDiagnosticsSnapshot();
+  assert.equal(requestSnapshot.recentRequests.at(-1).serializedConfirmed, false);
 
   const nullPrototypeContext = Object.create(null);
   nullPrototypeContext.foo = 'bar';
@@ -118,8 +143,7 @@ try {
     playbackContext: { contentPlaybackContext: nullPrototypeContext }
   };
   assert.equal(
-    JSON.parse(JSON.stringify(nullPrototypePayload)).playbackContext
-      .contentPlaybackContext.isInlinePlaybackNoAd,
+    JSON.parse(JSON.stringify(nullPrototypePayload)).playbackContext.contentPlaybackContext.isInlinePlaybackNoAd,
     true
   );
 
@@ -134,8 +158,14 @@ try {
   assert.throws(() => originalStringify(circular), TypeError);
   assert.throws(() => JSON.stringify(circular), TypeError);
 
-  console.log('json-stringify-hook: all compatibility and regression tests passed');
+  requestSnapshot = diagnosticsModule.getPlaybackRequestDiagnosticsSnapshot();
+  assert.ok(requestSnapshot.playbackCandidates >= 6);
+  assert.ok(requestSnapshot.patchesApplied >= 5);
+  assert.ok(requestSnapshot.serializedConfirmed >= 4);
+
+  console.log('json-stringify-hook: compatibility and playback-request diagnostics regressions passed');
 } finally {
   JSON.stringify = originalStringify;
   console.info = originalInfo;
+  await rm(tempRoot, { recursive: true, force: true });
 }

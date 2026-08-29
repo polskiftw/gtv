@@ -36,6 +36,37 @@ assert.equal(isShortsEntry({ contentType: 'TILE_CONTENT_TYPE_SHORTS' }), true);
 assert.equal(isShortsEntry({ onSelectCommand: { reelWatchEndpoint: { videoId: 'direct-endpoint' } } }), true);
 assert.equal(isShortsEntry(shortShelf()), true);
 assert.equal(isShortsEntry(normalTile('normal')), false);
+assert.equal(
+  isShortsEntry({
+    guideEntryRenderer: { navigationEndpoint: { reelWatchEndpoint: { videoId: 'guide-short' } } }
+  }),
+  true,
+  'direct guide reel navigation should be removed when Remove Shorts is enabled'
+);
+assert.equal(
+  isShortsEntry({ startupToken: 'x', launchToShorts: true, reelWatchEndpoint: {} }),
+  true,
+  'Shorts startup behaviours should be suppressed'
+);
+assert.equal(
+  isShortsEntry({
+    gridVideoRenderer: { navigationEndpoint: { reelWatchEndpoint: { videoId: 'channel-short' } } }
+  }),
+  true,
+  'channel-list renderer with direct reel navigation should be removed'
+);
+assert.equal(
+  isShortsEntry({
+    lockupViewModel: { onTap: { innertubeCommand: { reelWatchEndpoint: { videoId: 'lockup-short' } } } }
+  }),
+  true,
+  'modern lockup direct reel navigation should be removed'
+);
+assert.equal(
+  isShortsEntry({ lockupViewModel: { contentType: 'YOUTUBE_SHORTS_LOCKUP_2026' } }),
+  true,
+  'direct renderer/view-model Shorts content enum should be removed'
+);
 
 const response = {
   home: {
@@ -160,9 +191,13 @@ const futureSchema = {
   items: [
     {
       lockupViewModel: {
-        contentType: 'YOUTUBE_SHORTS_LOCKUP_2026',
         command: { shortsNavigationEndpoint: {} },
         trackingParams: 'secret-shorts-tracking-must-not-be-retained'
+      }
+    },
+    {
+      lockupViewModel: {
+        commandMetadata: { webCommandMetadata: { url: '/shorts/abc123?feature=share' } }
       }
     },
     normalTile('future-normal')
@@ -173,19 +208,40 @@ diagnostics = getShortsDiagnosticsSnapshot();
 assert.equal(diagnostics.responsesScanned, 2);
 assert.ok(
   diagnostics.recentSurvivors.some((entry) =>
-    entry.clues.includes('contentType=YOUTUBE_SHORTS_LOCKUP_2026') &&
     entry.clues.includes('key:shortsNavigationEndpoint')
   ),
   'unknown Shorts-like schemas must be surfaced without being deleted blindly'
+);
+assert.ok(
+  diagnostics.recentSurvivors.some((entry) => entry.clues.includes('url:shorts-path')),
+  'Shorts URL paths should be reported as a boolean-style clue without retaining the URL'
 );
 assert.equal(
   JSON.stringify(diagnostics).includes('secret-shorts-tracking-must-not-be-retained'),
   false,
   'diagnostics must not retain arbitrary tracking values'
 );
+assert.equal(
+  JSON.stringify(diagnostics).includes('/shorts/abc123'),
+  false,
+  'diagnostics must not retain Shorts URLs'
+);
 assert.ok(
   diagnostics.signalInventory.some((entry) => entry.clue === 'key:shortsNavigationEndpoint')
 );
+
+const expandedKnown = {
+  items: [
+    { guideEntryRenderer: { navigationEndpoint: { reelWatchEndpoint: {} } } },
+    { launchToShorts: true, resumeToShorts: false },
+    { gridVideoRenderer: { navigationEndpoint: { reelWatchEndpoint: {} } } },
+    { lockupViewModel: { contentType: 'YOUTUBE_SHORTS_LOCKUP_2026' } },
+    normalTile('expanded-normal')
+  ]
+};
+assert.equal(removeShortsEverywhere(expandedKnown), 4);
+assert.equal(expandedKnown.items.length, 1);
+assert.equal(expandedKnown.items[0].tileRenderer.videoId, 'expanded-normal');
 
 assert.equal(removeShortsEverywhere(null), 0);
 assert.equal(removeShortsEverywhere('not-json-object'), 0);
@@ -193,4 +249,4 @@ const normalOnly = { items: [normalTile('normal-only')] };
 assert.equal(removeShortsEverywhere(normalOnly), 0);
 assert.equal(normalOnly.items.length, 1);
 
-console.log('shorts-filter: removal and survivor diagnostics regressions passed');
+console.log('shorts-filter: expanded removal and survivor diagnostics regressions passed');

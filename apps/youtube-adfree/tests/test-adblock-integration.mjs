@@ -40,10 +40,10 @@ assert.match(
   /removeSponsoredPlaybackOverlays\(r\)/,
   'existing playback overlay filtering must remain installed'
 );
-assert.match(
+assert.doesNotMatch(
   adblock,
-  /neutralizeStandaloneAdPlayback\(r\)/,
-  'revision 7 standalone ad-playback neutralizer must remain installed'
+  /neutralizeStandaloneAdPlayback|ad-playback-state-filter/,
+  'failed standalone ad-playback mutation must be retired from revision 9'
 );
 
 const earlyAdblock = userScript.indexOf("import './adblock.js';");
@@ -84,4 +84,4 @@ assert.equal(
   'userScript must import DEV diagnostics exactly once'
 );
 
-console.log('adblock-integration: early adblock/Shorts wiring and startup ordering passed');
+console.log('adblock-integration: early adblock/Shorts wiring and retired ad-state mutation passed');

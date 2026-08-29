@@ -7,17 +7,23 @@ export const SHORTS_SIGNATURES = Object.freeze({
 
 const SHORTS_DIAGNOSTIC_RECENT_LIMIT = 12;
 const SHORTS_DIAGNOSTIC_INVENTORY_LIMIT = 48;
-const SHORTS_DIAGNOSTIC_SCAN_DEPTH = 4;
-const SHORTS_DIAGNOSTIC_SCAN_NODES = 96;
-const SHORTS_DIAGNOSTIC_CLUES_PER_ITEM = 8;
+const SHORTS_DIAGNOSTIC_SCAN_DEPTH = 8;
+const SHORTS_DIAGNOSTIC_SCAN_NODES = 160;
+const SHORTS_DIAGNOSTIC_CLUES_PER_ITEM = 10;
 const SHORTS_SIGNAL_PATTERN = /(short|reel)/i;
+const DIRECT_SHORTS_VALUE_PATTERN = /(^|[_-])SHORTS([_-]|$)/i;
+const SHORTS_URL_PATH_PATTERN = /\/shorts(?:\/|$|\?)/i;
 const SHORTS_SAFE_SCALAR_KEYS = new Set([
   'style',
   'contentType',
   'tvhtml5ShelfRendererType',
   'type',
   'targetId',
-  'browseId'
+  'browseId',
+  'pageType',
+  'webPageType',
+  'videoType',
+  'entityType'
 ]);
 
 const shortsDiagnostics = {
@@ -31,6 +37,10 @@ const shortsDiagnostics = {
 
 function isObject(value) {
   return value !== null && typeof value === 'object';
+}
+
+function isObjectRecord(value) {
+  return isObject(value) && !Array.isArray(value);
 }
 
 function objectPath(parent, key) {
@@ -63,7 +73,7 @@ function recordInventory(clue, path) {
 // schema-ish allowlisted fields; arbitrary titles, URLs, tokens and tracking data
 // are never stored by diagnostics.
 function collectSurvivorClues(item) {
-  if (!isObject(item) || Array.isArray(item)) return [];
+  if (!isObjectRecord(item)) return [];
 
   const clues = [];
   const stack = [{ value: item, depth: 0 }];
@@ -71,7 +81,7 @@ function collectSurvivorClues(item) {
 
   while (stack.length > 0 && visited < SHORTS_DIAGNOSTIC_SCAN_NODES) {
     const current = stack.pop();
-    if (!isObject(current.value) || Array.isArray(current.value)) continue;
+    if (!isObjectRecord(current.value)) continue;
     visited += 1;
 
     const keys = Object.keys(current.value);
@@ -93,8 +103,15 @@ function collectSurvivorClues(item) {
       }
 
       if (
-        isObject(child) &&
-        !Array.isArray(child) &&
+        (key === 'url' || key === 'canonicalBaseUrl') &&
+        typeof child === 'string' &&
+        SHORTS_URL_PATH_PATTERN.test(child)
+      ) {
+        addShortsSignal(clues, `${key}:shorts-path`);
+      }
+
+      if (
+        isObjectRecord(child) &&
         current.depth < SHORTS_DIAGNOSTIC_SCAN_DEPTH
       ) {
         stack.push({ value: child, depth: current.depth + 1 });
@@ -122,11 +139,59 @@ function recordSuspiciousSurvivor(item, path) {
   clues.forEach((clue) => recordInventory(clue, path));
 }
 
-// Classify only the array entry itself (and its direct renderer). This is
-// intentionally conservative: a nested metadata reference to a reel endpoint
-// must not cause a normal containing item to disappear.
+function hasReelWatchEndpoint(value) {
+  return isObjectRecord(value) && isObject(value.reelWatchEndpoint);
+}
+
+function hasDirectShortsNavigation(value) {
+  if (!isObjectRecord(value)) return false;
+
+  if (
+    hasReelWatchEndpoint(value.onSelectCommand) ||
+    hasReelWatchEndpoint(value.navigationEndpoint) ||
+    hasReelWatchEndpoint(value.command)
+  ) {
+    return true;
+  }
+
+  const onTap = value.onTap;
+  if (!isObjectRecord(onTap)) return false;
+  return Boolean(
+    hasReelWatchEndpoint(onTap) ||
+      hasReelWatchEndpoint(onTap.command) ||
+      hasReelWatchEndpoint(onTap.innertubeCommand)
+  );
+}
+
+function isDirectShortsSchemaValue(value) {
+  if (!isObjectRecord(value)) return false;
+  const keys = ['style', 'contentType', 'type', 'tvhtml5ShelfRendererType'];
+  for (let index = 0; index < keys.length; index += 1) {
+    const scalar = value[keys[index]];
+    if (typeof scalar === 'string' && DIRECT_SHORTS_VALUE_PATTERN.test(scalar)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function directEntryCandidates(item) {
+  const candidates = [item];
+  const keys = Object.keys(item);
+  for (let index = 0; index < keys.length; index += 1) {
+    const key = keys[index];
+    const child = item[key];
+    if (isObjectRecord(child) && /(Renderer|ViewModel)$/.test(key)) {
+      candidates.push(child);
+    }
+  }
+  return candidates;
+}
+
+// Classify only the array entry itself and direct renderer/view-model command
+// envelopes. We intentionally do not chase arbitrary metadata object chains.
 export function isShortsEntry(item) {
-  if (!isObject(item)) return false;
+  if (!isObjectRecord(item)) return false;
 
   const shelf = item.shelfRenderer;
   if (shelf?.tvhtml5ShelfRendererType === SHORTS_SIGNATURES.shelfType) {
@@ -135,7 +200,7 @@ export function isShortsEntry(item) {
 
   const tile = item.tileRenderer;
   if (
-    isObject(tile) &&
+    isObjectRecord(tile) &&
     (tile.style === SHORTS_SIGNATURES.tileStyle ||
       tile.contentType === SHORTS_SIGNATURES.contentType ||
       tile.onSelectCommand?.reelWatchEndpoint != null)
@@ -143,11 +208,29 @@ export function isShortsEntry(item) {
     return true;
   }
 
-  return Boolean(
+  if (
     item.reelItemRenderer ||
-      item.contentType === SHORTS_SIGNATURES.contentType ||
-      item.onSelectCommand?.reelWatchEndpoint != null
-  );
+    item.contentType === SHORTS_SIGNATURES.contentType ||
+    item.onSelectCommand?.reelWatchEndpoint != null
+  ) {
+    return true;
+  }
+
+  if ('launchToShorts' in item || 'resumeToShorts' in item) {
+    return true;
+  }
+
+  const candidates = directEntryCandidates(item);
+  for (let index = 0; index < candidates.length; index += 1) {
+    if (
+      hasDirectShortsNavigation(candidates[index]) ||
+      isDirectShortsSchemaValue(candidates[index])
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // JSON.parse produces an acyclic object graph, so an iterative walk is enough

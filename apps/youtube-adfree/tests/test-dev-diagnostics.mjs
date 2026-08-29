@@ -89,8 +89,13 @@ assert.equal(snapshot.removedFeedRenderers, 1);
 assert.equal(snapshot.knownMarkerResponses, 1);
 
 const devUi = await readFile(devUiPath, 'utf8');
-assert.match(devUi, /GTV DEV DIAGNOSTICS v5/);
+assert.match(devUi, /GTV DEV DIAGNOSTICS v6/);
+assert.match(devUi, /PLAYBACK REQUEST DIAGNOSTICS/);
+assert.match(devUi, /getPlaybackRequestDiagnosticsSnapshot/);
+assert.match(devUi, /serialized no-ad=true confirmed/);
+assert.match(devUi, /final serialized body confirms true/);
 assert.match(devUi, /AD PLAYBACK EVENTS/);
+assert.match(devUi, /observed only; DEV no longer mutates them/);
 assert.match(devUi, /ENTITY PAYLOAD EVENTS/);
 assert.match(devUi, /SHORTS SURVIVOR DIAGNOSTICS/);
 assert.match(devUi, /getShortsDiagnosticsSnapshot/);
@@ -105,4 +110,4 @@ assert.match(devUi, /window\.addEventListener\('keydown', handleKey, true\)/);
 assert.doesNotMatch(devUi, /ArrowUp|ArrowDown|scrollTop|PAGE_SCROLL_FRACTION/);
 assert.doesNotMatch(devUi, /console\.(log|debug|info)\(/);
 
-console.log('dev-diagnostics: ad/entity/Shorts diagnostics and paging contract passed');
+console.log('dev-diagnostics: request/ad/entity/Shorts diagnostics and paging contract passed');

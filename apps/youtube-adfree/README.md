@@ -10,71 +10,51 @@ The upstream application already provides ad blocking, SponsorBlock, quality con
 
 ### Global Shorts removal
 
-When **Remove Shorts** is enabled, GTV removes entries that match current YouTube TV Shorts schemas:
+When **Remove Shorts** is enabled, GTV removes entries that match current YouTube TV Shorts schemas, including known Shorts shelves/tiles, direct `reelItemRenderer` entries, direct renderer/view-model reel navigation commands, and direct Shorts content/style enums. The same toggle also suppresses Shorts-specific startup behaviours such as `launchToShorts` / `resumeToShorts` entries.
 
-- `TVHTML5_SHELF_RENDERER_TYPE_SHORTS` shelves
-- `TILE_STYLE_YTLR_SHORTS` tiles
-- `TILE_CONTENT_TYPE_SHORTS` entries or tiles
-- entries or tiles whose direct selection command contains `reelWatchEndpoint`
-- `reelItemRenderer` entries
+Filtering is performed on parsed Innertube response objects before rendering. A single iterative traversal handles browse, search, subscription/channel grids, shelves, pagination/continuations, and response-action continuation arrays without depending on one page-specific outer path. Direct command envelopes such as `navigationEndpoint.reelWatchEndpoint`, `onSelectCommand.reelWatchEndpoint`, and modern `onTap.innertubeCommand.reelWatchEndpoint` are treated as high-confidence Shorts entries; arbitrary nested metadata references still are not.
 
-Filtering is performed on parsed Innertube response objects before rendering. A single iterative traversal handles browse, search, subscription grids, shelves, pagination/continuations, and response-action continuation arrays without depending on one page-specific outer path. Only direct item/shelf signatures are removed; nested metadata references are not treated as proof that the containing item is a Short.
+Revision 8 moved the Shorts `JSON.parse` hook ahead of `app_api`, beside the already-early adblock hook, closing the fresh-launch response race. Revision 9 broadens the direct-entry classifier specifically to cover newer renderer/view-model forms that can appear mixed into channel video lists while keeping every removal behind the existing **Remove Shorts** setting.
 
-Revision 8 moves the Shorts `JSON.parse` hook ahead of `app_api` during userscript initialization, beside the already-early adblock hook. This closes the fresh-launch race where YouTube could parse and render an initial Home response before the Shorts filter existed.
+The DEV filter also keeps bounded diagnostics for surviving array entries that contain schema-ish `short`/`reel` clues. Revision 9 scans deeper object-wrapper chains and can report a privacy-safe `url:shorts-path` clue without retaining the URL itself. Titles, tracking values, URLs, tokens, video IDs, and arbitrary payload strings are not retained.
 
-The DEV filter also keeps bounded diagnostics for array entries that survive classification but contain schema-ish `short`/`reel` clues. It records only object paths, key names, and allowlisted schema fields such as `style`, `contentType`, `tvhtml5ShelfRendererType`, `type`, `targetId`, and `browseId`; titles, tracking values, URLs, tokens, and arbitrary payload strings are not retained. Unknown-looking entries are reported rather than deleted blindly.
-
-The patch also changes the setting description from “Remove Shorts from subscriptions” to “Remove Shorts everywhere.”
+The patch changes the setting description from “Remove Shorts from subscriptions” to “Remove Shorts everywhere.”
 
 ### Sponsored feed ad hardening
 
-Upstream 0.5.3 removes Home and Search ads only from a few exact schema paths and recognizes the TV masthead only as an immediate `tvMastheadRenderer` item. That can miss ads when YouTube changes response wrappers, inserts promotional items through continuations/actions, or delivers the initial Home response before the adblock hook is installed.
+Upstream 0.5.3 removes Home and Search ads only from a few exact schema paths and recognizes the TV masthead only as an immediate `tvMastheadRenderer` item. GTV replaces that page-specific logic with a marker-gated structural filter covering known masthead, promoted, banner, in-feed, and ad-slot renderer variants. GTV also installs the adblock `JSON.parse` hook before `app_api` to close the fresh-launch timing gap.
 
-When **AdBlock** is enabled, GTV replaces that page-specific logic with a marker-gated structural filter. It recognizes the upstream TV renderers plus known masthead and promoted-content variants such as `videoMastheadAdV3Renderer`, `videoMastheadAdRenderer`, `videoMastheadAdRendererBetaPreview`, `bannerPromoRenderer`, `inFeedAdLayoutRenderer`, promoted video renderers, and branded video promo renderers.
+### DEV on-TV diagnostics
 
-The structural walk is bounded and only runs when the serialized JSON contains a known sponsored renderer marker. Array items are checked through object-only wrapper chains, but detection intentionally stops at nested arrays so one sponsored child does not cause an otherwise valid shelf or section to be deleted. Ads inside those child collections are filtered individually instead.
+The `dev` branch keeps the same application ID (`youtube.leanback.v4`) and uses version `9690.5.3` / GTV revision 9 so it updates in place over earlier DEV builds.
 
-GTV moves the adblock module ahead of `app_api` during userscript initialization. This installs the `JSON.parse` hook earlier and closes the fresh-launch timing gap reported in the webOS YouTube fork family, where a sponsored first item could appear on initial app load but disappear after a refresh.
+On the DEV build, the **blue remote button** opens a frozen, full-screen paged diagnostics snapshot. Blue advances one generated page and Back closes it. The normal upstream configuration screen remains on **Green**.
 
-### DEV on-TV diagnostics and active experiments
+DEV diagnostics v6 includes:
 
-The `dev` branch keeps the same application ID (`youtube.leanback.v4`) and uses the higher GTV version `8690.5.3`, allowing it to replace previous diagnostic builds as an update.
-
-On the DEV build, the **blue remote button** opens a frozen, full-screen paged diagnostics snapshot. Blue advances exactly one generated page and Back closes it. The report is deliberately sized for photographing one screen at a time.
-
-DEV diagnostics v5 includes:
-
-- exact `isAdPlayback` booleans with their value, object path, response shape, nearest player response, and bounded before/after response summaries
+- outbound playback-request candidates detected at `JSON.stringify`, showing only safe key names plus the `isInlinePlaybackNoAd` state before patching, whether the copy-on-write patch ran, the state afterward, and whether the final serialized body actually contained `isInlinePlaybackNoAd=true`
+- exact response-side `isAdPlayback` booleans with response shape, nearest player response, and bounded before/after response summaries
 - named framework/update `*Entity` payload types with safe allowlisted hints
 - response-shape, renderer/view-model, ad/promo signal, large-response, and legacy Home-path inventories
-- Shorts filtering totals plus a dedicated **SHORTS SURVIVOR DIAGNOSTICS** section showing safe schema clues for Shorts/reel-looking array entries that the known classifier kept
-- a Shorts signal inventory so a new renderer/view-model or content-type name can be identified from photographs without retaining arbitrary content strings
+- Shorts filtering totals, Shorts survivor diagnostics, and a Shorts signal inventory
 
-Revision 7's deliberately narrow active experiment remains enabled. When **AdBlock** is on, if a parsed response has exactly the three top-level keys `responseContext`, `trackingParams`, and `isAdPlayback`, and `isAdPlayback` is `true`, GTV changes only that boolean to `false`. The response envelope is otherwise preserved. The ad diagnostics observer runs before this neutralizer so the original `true` event remains visible in the report.
+Revision 9 **retires** revision 7's standalone `isAdPlayback=true → false` experiment. Hardware testing showed the ad still played even though that exact 369-character response was intercepted and changed, so DEV now observes the boolean without mutating it. This removes a useless variable while preserving the event as a timestamp for correlating the ad path.
 
-The neutralizer does **not** touch normal player responses, nested `isAdPlayback` fields, already-false state notifications, incomplete envelopes, or objects with any additional top-level fields.
+The main ad question for v6 is request-side: when a player request is serialized, did `isInlinePlaybackNoAd` exist before the hook, did GTV insert it, and did the final serialized request body actually contain it? The diagnostic records only those booleans/states and structural key names; it never stores the request body, video ID, URL, tokens, tracking values, or auth data.
 
-Because upstream uses Blue for Audio-Only mode, the DEV build intentionally takes over that key before upstream `ui.js` receives it. The normal upstream configuration screen remains on Green.
-
-DEV branding also inverts the RGB colors of the completed branded launcher icons and Homebrew Channel icon while preserving alpha, making the diagnostic build visually distinct from the release build.
+DEV branding inverts the completed launcher/Homebrew icon colors so the diagnostic build remains visually distinct.
 
 ### Sponsored playback overlay suppression
 
-Upstream 0.5.3 already sets `playbackContext.contentPlaybackContext.isInlinePlaybackNoAd` on playback requests, so GTV does not treat that request flag as the QR/Shop filter.
-
-When the existing **AdBlock** setting is enabled, GTV additionally filters parsed player responses and removes `playerOverlays.playerOverlayRenderer.timelyActionRenderers`, the timed playback-overlay collection used for sponsored QR-code and Shop prompts. The filter handles both the normal top-level player response and the known `playerResponse` wrapper. It intentionally does not recursively search arbitrary response objects, and it leaves sibling player-overlay data untouched.
-
-There is no separate GTV setting for this behavior; it is part of the existing AdBlock path.
+When the existing **AdBlock** setting is enabled, GTV filters parsed player responses and removes `playerOverlays.playerOverlayRenderer.timelyActionRenderers`, the timed playback-overlay collection used for sponsored QR-code and Shop prompts. There is no separate GTV setting for this behavior.
 
 ### Playback JSON hook hardening
 
-Upstream's playback hook deep-clones every non-primitive value passed to `JSON.stringify` before applying `isInlinePlaybackNoAd`. GTV preserves the same request-side flag behavior but narrows the hook to the exact playback-context chain, uses copy-on-write cloning only when the flag needs to change, leaves caller-owned objects untouched, preserves replacer behavior, and avoids cloning unrelated JSON serialization entirely.
-
-This hook is independent of the QR/Shop response filter above.
+Upstream sets `playbackContext.contentPlaybackContext.isInlinePlaybackNoAd = true` on playback requests. GTV preserves that behavior while narrowing the hook to the exact playback-context chain, using copy-on-write cloning, leaving caller-owned objects untouched, preserving replacer behavior, and avoiding cloning unrelated JSON serialization. Revision 9 adds diagnostics around this hook without changing its ad-prevention behavior.
 
 ## Building
 
-The DEV workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the feed-ad, DEV-diagnostics, standalone ad-playback-state, adblock-integration, Shorts, sponsored-overlay, and playback-hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK. Successful DEV builds are automatically promoted into the main Homebrew feed by the separate promotion workflow.
+The DEV workflow checks out the pinned upstream commit, applies the files under `patches/`, runs feed-ad, DEV-diagnostics, adblock-integration, Shorts, sponsored-overlay, and playback-request/hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK. Successful DEV builds are automatically promoted into the main Homebrew feed by the separate promotion workflow.
 
 The package keeps the upstream application ID, `youtube.leanback.v4`, so the official YouTube TV application must be uninstalled before installation, matching upstream requirements.
 
