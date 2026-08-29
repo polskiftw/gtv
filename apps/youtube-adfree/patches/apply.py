@@ -63,12 +63,14 @@ adblock = adblock.replace(
     adblock_import,
     adblock_import
     + "import { removeSponsoredFeedAds } from './feed-ad-filter';\n"
-    + "import { removeSponsoredPlaybackOverlays } from './playback-overlay-filter';\n",
+    + "import { removeSponsoredPlaybackOverlays } from './playback-overlay-filter';\n"
+    + "import { handleAdPlaybackResponse } from './ssai-ad-skipper';\n",
     1,
 )
 adblock = adblock.replace(
     adblock_guard,
     adblock_guard
+    + "  handleAdPlaybackResponse(r);\n\n"
     + "  const removedPlaybackOverlays = removeSponsoredPlaybackOverlays(r);\n"
     + "  if (removedPlaybackOverlays) {\n"
     + "    console.info('[adblock] Removed sponsored playback overlays');\n"
@@ -138,6 +140,7 @@ shutil.copy2(patches / "shorts.js", source / "src" / "shorts.js")
 shutil.copy2(patches / "shorts-filter.js", source / "src" / "shorts-filter.js")
 shutil.copy2(patches / "feed-ad-filter.js", source / "src" / "feed-ad-filter.js")
 shutil.copy2(patches / "playback-overlay-filter.js", source / "src" / "playback-overlay-filter.js")
+shutil.copy2(patches / "ssai-ad-skipper.js", source / "src" / "ssai-ad-skipper.js")
 shutil.copy2(
     patches / "playback-request-diagnostics.js",
     source / "src" / "playback-request-diagnostics.js",
