@@ -3,25 +3,21 @@
   "kind": "upstream-patch",
   "id": "youtube.leanback.v4",
   "title": "YouTube AdFree",
-  "version": "6690.5.3",
-  "gtvRevision": 6,
-  "shortDescription": "Development build with targeted ad-playback and entity diagnostics plus hardened ad blocking.",
-  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening. DEV diagnostics now pin every exact isAdPlayback boolean with its value, response shape, nearest player response, and immediate before/after response summaries; they also name framework payload entity types such as qrCodeEntity and retain only safe schema hints. The broad structural inventories remain available, with camel-case token matching to avoid false ad signals from unrelated keys such as payload, readahead, and adaptiveFormats. Blue opens the frozen paged report and advances one page per press; Back is the only way to close it.",
+  "version": "7690.5.3",
+  "gtvRevision": 7,
+  "shortDescription": "Development build that experimentally neutralizes the captured standalone ad-playback state response.",
+  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 7 keeps the revision 6 diagnostics and adds a deliberately narrow active experiment based on two real-TV captures: when AdBlock is enabled and a parsed response consists exactly of responseContext, trackingParams, and isAdPlayback=true, GTV preserves the response envelope but changes only isAdPlayback to false before YouTube consumes it. The diagnostics observer runs first, so the original true event remains visible in the on-TV report. Normal player responses, nested isAdPlayback fields, false states, and objects with any extra top-level fields are left untouched.",
   "changes": {
     "added": [
-      "Dedicated AD PLAYBACK EVENTS diagnostics that record the exact isAdPlayback boolean value, object path, top-level response keys, nearest player response, and bounded before/after response summaries.",
-      "Dedicated ENTITY PAYLOAD EVENTS diagnostics that identify named framework payload objects such as qrCodeEntity and preserve safe style/layout hints without retaining arbitrary payload strings.",
-      "Association of later entity updates with the most recently observed ad-playback event so an interactive ad flow can be reconstructed from photographs."
+      "Experimental standalone ad-playback state neutralizer for the exact responseContext + trackingParams + isAdPlayback=true shape captured twice on real hardware.",
+      "Regression coverage proving the neutralizer ignores normal player responses, nested fields, false states, incomplete envelopes, and objects with additional top-level state."
     ],
     "changed": [
-      "Ad/promo signal detection now tokenizes camel-case key names instead of substring-matching, preventing false positives from payload, readahead, adaptiveFormats, and similar unrelated keys.",
-      "The safe scalar-hint allowlist now includes isAdPlayback so its true/false value is visible in response profiles.",
-      "Blue-button photograph-sized pagination and Back-only exit remain unchanged; development branding continues to invert final launcher and Homebrew Channel icon colors."
+      "DEV diagnostics remain installed ahead of the neutralizer, so captured isAdPlayback=true events are recorded before the response is changed to false.",
+      "DEV version advanced to 7690.5.3 / GTV revision 7 for over-the-air testing."
     ],
     "fixed": [
-      "DEV diagnostics previously proving that isAdPlayback existed but discarding the boolean value needed to distinguish real ad playback from a negative state notification.",
-      "Generic payload and read-ahead/player-buffer keys polluting the ad/masthead/promo signal inventory because their spelling happened to contain the letters ad.",
-      "Sponsored Home masthead and feed ads escaping the known-renderer filter during fresh app loads or alternate response schemas remain observable without deleting unknown structures blindly."
+      "Targeted the previously unhandled compact ad-playback state transition instead of broadening Home renderer deletion heuristics."
     ]
   },
   "rootRequired": false,

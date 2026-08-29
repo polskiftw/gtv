@@ -2,7 +2,7 @@
 
 GTV-maintained patch of [`webosbrew/youtube-webos`](https://github.com/webosbrew/youtube-webos), pinned to commit `f1b3b72926bb0cc312b5ceddc6a5b8c8ca081914` (upstream version 0.5.3).
 
-GTV modification date: **2026-08-25**.
+GTV modification date: **2026-08-29**.
 
 The upstream application already provides ad blocking, SponsorBlock, quality controls, and a **Remove Shorts** setting. GTV keeps those features while hardening several response-filtering paths that are brittle in upstream 0.5.3.
 
@@ -32,21 +32,25 @@ The structural walk is bounded and only runs when the serialized JSON contains a
 
 GTV also moves the adblock module ahead of `app_api` during userscript initialization. This installs the `JSON.parse` hook earlier and closes the fresh-launch timing gap reported in the webOS YouTube fork family, where a sponsored first item could appear on initial app load but disappear after a refresh.
 
-### DEV on-TV diagnostics
+### DEV on-TV diagnostics and revision 7 experiment
 
-The `dev` branch keeps the same application ID (`youtube.leanback.v4`) and uses the higher GTV version `6690.5.3`, allowing it to replace the previous diagnostic build as an update.
+The `dev` branch keeps the same application ID (`youtube.leanback.v4`) and uses the higher GTV version `7690.5.3`, allowing it to replace the previous diagnostic build as an update.
 
 On the DEV build, the **blue remote button** opens a frozen, full-screen paged diagnostics snapshot. Blue advances exactly one generated page and Back closes it. The report is deliberately sized for photographing one screen at a time.
 
-DEV diagnostics v4 adds targeted capture for the ad flow observed on a real TV:
+DEV diagnostics v4 captures the ad flow observed on a real TV:
 
 - every exact `isAdPlayback` boolean is pinned with its **true/false value**, object path, top-level response shape, nearest previously observed player response, and a bounded set of responses immediately before and after it
 - framework/update `payload` objects are inspected only for named `*Entity` children such as `qrCodeEntity`; the report records the entity type/path and safe allowlisted hints such as `style`
 - entity events are associated with the most recent `isAdPlayback` event to help reconstruct delayed interactive ad UI such as QR-code side sheets
 - the broad renderer/view-model inventory, response-shape counts, large/recent response profiles, notable arrays, and legacy Home-path clues remain available
-- ad/promo signal matching now tokenizes camel-case names, so unrelated keys such as `payload`, `dynamicReadaheadConfig`, `readAheadGrowthRateMs`, and `adaptiveFormats` no longer appear merely because their spelling contains the letters `ad`
+- ad/promo signal matching tokenizes camel-case names, so unrelated keys such as `payload`, `dynamicReadaheadConfig`, `readAheadGrowthRateMs`, and `adaptiveFormats` do not appear merely because their spelling contains the letters `ad`
 
-The observer remains diagnostic-only for unknown schemas. It does not delete a response merely because it looks ad-like. Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, and arbitrary payload strings are not retained.
+Revision 7 adds a deliberately narrow active experiment based on two independent real-TV captures. When **AdBlock** is enabled, if a parsed response has exactly the three top-level keys `responseContext`, `trackingParams`, and `isAdPlayback`, and `isAdPlayback` is `true`, GTV changes only that boolean to `false`. The response envelope is otherwise preserved. The diagnostics observer runs before this neutralizer so the original `true` event remains visible in the report.
+
+The neutralizer intentionally does **not** touch normal player responses, nested `isAdPlayback` fields, already-false state notifications, incomplete envelopes, or objects with any additional top-level fields. This is an experimental DEV-only response to the exact compact 369-character schema captured twice on hardware, rather than another broad renderer heuristic.
+
+Tracking params, continuation tokens, visitor/auth data, cookies, URLs, signatures, and arbitrary payload strings are not retained by diagnostics.
 
 Because upstream uses Blue for Audio-Only mode, the DEV build intentionally takes over that key before upstream `ui.js` receives it. The normal upstream configuration screen remains on Green.
 
@@ -68,7 +72,7 @@ This hook is independent of the QR/Shop response filter above.
 
 ## Building
 
-The repository workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the feed-ad, DEV-diagnostics, adblock-integration, Shorts, sponsored-overlay, and playback-hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK.
+The DEV workflow checks out the pinned upstream commit, applies the files under `patches/`, runs the feed-ad, DEV-diagnostics, standalone ad-playback-state, adblock-integration, Shorts, sponsored-overlay, and playback-hook regression tests, applies GTV icon branding, builds with the upstream pnpm toolchain, and packages the resulting IPK. Successful DEV builds are automatically promoted into the main Homebrew feed by the separate promotion workflow.
 
 The package keeps the upstream application ID, `youtube.leanback.v4`, so the official YouTube TV application must be uninstalled before installation, matching upstream requirements.
 

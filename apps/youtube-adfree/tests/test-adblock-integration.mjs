@@ -26,6 +26,21 @@ assert.match(
   'feed filtering should receive the original JSON text for marker gating'
 );
 assert.equal(
+  (adblock.match(/neutralizeStandaloneAdPlayback/g) || []).length,
+  2,
+  'patched adblock should import and call neutralizeStandaloneAdPlayback exactly once'
+);
+assert.match(
+  adblock,
+  /neutralizeStandaloneAdPlayback\(r\)/,
+  'captured standalone ad-playback response should be neutralized in the JSON.parse hook'
+);
+assert.ok(
+  adblock.indexOf('removeSponsoredFeedAds(r, arguments[0])') <
+    adblock.indexOf('neutralizeStandaloneAdPlayback(r)'),
+  'DEV diagnostics must observe the original isAdPlayback=true value before neutralization'
+);
+assert.equal(
   adblock.includes('function removeAdSlotRenderer'),
   false,
   'legacy page-specific ad-slot helper should be replaced by the hardened filter'
@@ -72,4 +87,4 @@ assert.equal(
   'userScript must import DEV diagnostics exactly once'
 );
 
-console.log('adblock-integration: DEV patch wiring and startup ordering passed');
+console.log('adblock-integration: DEV patch wiring, ad-state neutralizer, and startup ordering passed');
