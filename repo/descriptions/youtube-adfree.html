@@ -1,5 +1,6 @@
-<p><strong>Added</strong> Shorts survivor diagnostics that record safe schema clues and object paths for Shorts/reel-looking array entries that were intentionally not removed by the known classifier.</p>
-<p><strong>Added</strong> On-TV diagnostics v5 summary counts and a dedicated Shorts survivor/signal inventory section.</p>
-<p><strong>Added</strong> Regression coverage for unknown Shorts-like schemas and for early Shorts hook installation.</p>
-<p><strong>Fixed</strong> Shorts could leak into the first rendered responses because upstream loaded shorts.js after app_api even though GTV had already moved adblock ahead of app_api.</p>
+<p><strong>Added</strong> Diagnostics v6 playback-request section showing safe request structure, isInlinePlaybackNoAd state before and after patching, whether the copy-on-write patch ran, and whether the final serialized body actually contained isInlinePlaybackNoAd=true.</p>
+<p><strong>Added</strong> High-confidence Shorts recognition for direct renderer/view-model navigationEndpoint/onSelectCommand/onTap reelWatchEndpoint paths and direct Shorts content/style enums.</p>
+<p><strong>Added</strong> Privacy-safe Shorts URL-path clue detection for surviving schemas without retaining the URL itself.</p>
+<p><strong>Fixed</strong> Removed the revision 7 standalone isAdPlayback=true neutralizer after hardware testing proved that changing the boolean to false did not prevent the advertisement.</p>
+<p><strong>Fixed</strong> Remove Shorts now also suppresses direct Shorts guide/startup entries and modern direct reel-navigation card forms while the existing Remove Shorts toggle is enabled.</p>
 <p>Based on <a href="https://github.com/webosbrew/youtube-webos">YouTube webOS 0.5.3</a></p>

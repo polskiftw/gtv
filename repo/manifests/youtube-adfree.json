@@ -1,15 +1,15 @@
 {
   "id": "youtube.leanback.v4",
-  "version": "8690.5.3",
+  "version": "9690.5.3",
   "type": "web",
   "title": "YouTube AdFree",
-  "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 8 includes the revision 7 standalone isAdPlayback experiment, moves the Remove Shorts JSON.parse hook ahead of app_api to close the same fresh-launch timing window already fixed for ad blocking, and upgrades the on-TV report to diagnostics v5. The Shorts diagnostics count known removals and safely inventory Shorts/reel schema clues found in array entries that survived the conservative classifier, without retaining titles, tracking values, URLs, tokens, or arbitrary payload strings.",
+  "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 9 retires the ineffective standalone isAdPlayback=true mutation while retaining isAdPlayback observation, upgrades the on-TV report to diagnostics v6 with privacy-safe outbound playback-request instrumentation for isInlinePlaybackNoAd, and broadens Remove Shorts handling for direct renderer/view-model reel navigation, direct Shorts content/style enums, and Shorts startup behaviours. Every Shorts removal remains controlled by the existing Remove Shorts setting.",
   "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/youtube-adfree.png",
   "sourceUrl": "https://github.com/webosbrew/youtube-webos",
   "rootRequired": false,
   "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/youtube-adfree.ipk",
   "ipkHash": {
-    "sha256": "a659fbf59a11c38844eb2eb7b47fabf412bcf38a95c943d722739eff4680449d"
+    "sha256": "eb8ab31a1c22977468129150ff781d505e312f0ca97b1791cf460b12faf4adf4"
   },
-  "ipkSize": 527806
+  "ipkSize": 531898
 }
