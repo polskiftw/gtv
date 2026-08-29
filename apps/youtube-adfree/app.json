@@ -3,23 +3,22 @@
   "kind": "upstream-patch",
   "id": "youtube.leanback.v4",
   "title": "YouTube AdFree",
-  "version": "9690.5.3",
-  "gtvRevision": 9,
-  "shortDescription": "Development build with playback-request diagnostics and broader Shorts removal.",
-  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 9 retires the ineffective standalone isAdPlayback=true mutation while retaining isAdPlayback observation, upgrades the on-TV report to diagnostics v6 with privacy-safe outbound playback-request instrumentation for isInlinePlaybackNoAd, and broadens Remove Shorts handling for direct renderer/view-model reel navigation, direct Shorts content/style enums, and Shorts startup behaviours. Every Shorts removal remains controlled by the existing Remove Shorts setting.",
+  "version": "10690.5.3",
+  "gtvRevision": 10,
+  "shortDescription": "Development build with server-side ad skipping and playback diagnostics.",
+  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 10 keeps diagnostics v6 and the revision 9 Shorts improvements, but now uses the exact isAdPlayback=true response as a high-confidence trigger for guarded player-level skipping of server-side ad items. The response boolean is not mutated; instead the current ad player is briefly hidden while GTV seeks the ad item to its own duration, with an HTMLVideoElement fallback when the player API is unavailable. Every Shorts removal remains controlled by the existing Remove Shorts setting.",
   "changes": {
     "added": [
-      "Diagnostics v6 playback-request section showing safe request structure, isInlinePlaybackNoAd state before and after patching, whether the copy-on-write patch ran, and whether the final serialized body actually contained isInlinePlaybackNoAd=true.",
-      "High-confidence Shorts recognition for direct renderer/view-model navigationEndpoint/onSelectCommand/onTap reelWatchEndpoint paths and direct Shorts content/style enums.",
-      "Privacy-safe Shorts URL-path clue detection for surviving schemas without retaining the URL itself."
+      "Player-level server-side ad skipping triggered only by an exact top-level isAdPlayback=true response.",
+      "A guarded HTMLVideoElement currentTime fallback when YouTube's player seekTo API is unavailable.",
+      "Regression coverage for player-level ad skipping and its early adblock integration."
     ],
     "changed": [
-      "Shorts survivor scanning is deeper and records more schema-only clues so mixed-in Shorts on channel video lists can be identified if a new card form still survives.",
-      "DEV version advanced to 9690.5.3 / GTV revision 9 and the on-TV diagnostic title advanced to v6."
+      "The ad-playback response remains unmodified and now acts as a trigger rather than an attempted server-state override.",
+      "DEV version advanced to 10690.5.3 / GTV revision 10."
     ],
     "fixed": [
-      "Removed the revision 7 standalone isAdPlayback=true neutralizer after hardware testing proved that changing the boolean to false did not prevent the advertisement.",
-      "Remove Shorts now also suppresses direct Shorts guide/startup entries and modern direct reel-navigation card forms while the existing Remove Shorts toggle is enabled."
+      "Targets the server-side ad path observed on hardware where isInlinePlaybackNoAd was already true, no known feed ad renderer survived, and the correlated player response carried adBreakHeartbeatParams plus sendSsdaiMissingAdBreakReasons."
     ]
   },
   "rootRequired": false,
