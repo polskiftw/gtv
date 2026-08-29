@@ -1,7 +1,4 @@
-<p><strong>Added</strong> Dedicated AD PLAYBACK EVENTS diagnostics that record the exact isAdPlayback boolean value, object path, top-level response keys, nearest player response, and bounded before/after response summaries.</p>
-<p><strong>Added</strong> Dedicated ENTITY PAYLOAD EVENTS diagnostics that identify named framework payload objects such as qrCodeEntity and preserve safe style/layout hints without retaining arbitrary payload strings.</p>
-<p><strong>Added</strong> Association of later entity updates with the most recently observed ad-playback event so an interactive ad flow can be reconstructed from photographs.</p>
-<p><strong>Fixed</strong> DEV diagnostics previously proving that isAdPlayback existed but discarding the boolean value needed to distinguish real ad playback from a negative state notification.</p>
-<p><strong>Fixed</strong> Generic payload and read-ahead/player-buffer keys polluting the ad/masthead/promo signal inventory because their spelling happened to contain the letters ad.</p>
-<p><strong>Fixed</strong> Sponsored Home masthead and feed ads escaping the known-renderer filter during fresh app loads or alternate response schemas remain observable without deleting unknown structures blindly.</p>
+<p><strong>Added</strong> Experimental standalone ad-playback state neutralizer for the exact responseContext + trackingParams + isAdPlayback=true shape captured twice on real hardware.</p>
+<p><strong>Added</strong> Regression coverage proving the neutralizer ignores normal player responses, nested fields, false states, incomplete envelopes, and objects with additional top-level state.</p>
+<p><strong>Fixed</strong> Targeted the previously unhandled compact ad-playback state transition instead of broadening Home renderer deletion heuristics.</p>
 <p>Based on <a href="https://github.com/webosbrew/youtube-webos">YouTube webOS 0.5.3</a></p>

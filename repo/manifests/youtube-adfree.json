@@ -1,15 +1,15 @@
 {
   "id": "youtube.leanback.v4",
-  "version": "6690.5.3",
+  "version": "7690.5.3",
   "type": "web",
   "title": "YouTube AdFree",
-  "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. It keeps the release ad-blocking, Shorts-removal, sponsored-overlay, and playback-hook hardening. DEV diagnostics now pin every exact isAdPlayback boolean with its value, response shape, nearest player response, and immediate before/after response summaries; they also name framework payload entity types such as qrCodeEntity and retain only safe schema hints. The broad structural inventories remain available, with camel-case token matching to avoid false ad signals from unrelated keys such as payload, readahead, and adaptiveFormats. Blue opens the frozen paged report and advances one page per press; Back is the only way to close it.",
+  "appDescription": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 7 keeps the revision 6 diagnostics and adds a deliberately narrow active experiment based on two real-TV captures: when AdBlock is enabled and a parsed response consists exactly of responseContext, trackingParams, and isAdPlayback=true, GTV preserves the response envelope but changes only isAdPlayback to false before YouTube consumes it. The diagnostics observer runs first, so the original true event remains visible in the on-TV report. Normal player responses, nested isAdPlayback fields, false states, and objects with any extra top-level fields are left untouched.",
   "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/icons/youtube-adfree.png",
   "sourceUrl": "https://github.com/webosbrew/youtube-webos",
   "rootRequired": false,
   "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/dev/repo/packages/youtube-adfree.ipk",
   "ipkHash": {
-    "sha256": "912c923f86e87e17f8d9e8168ab38fa36c872d86cd00d29f4cb232d6c6892f4d"
+    "sha256": "7ac28b37e69c0405f328c46f1c3632fd09e90723318067b97aec60fe3927cf23"
   },
-  "ipkSize": 523668
+  "ipkSize": 524388
 }
