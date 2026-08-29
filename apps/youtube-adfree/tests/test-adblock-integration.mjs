@@ -40,10 +40,25 @@ assert.match(
   /removeSponsoredPlaybackOverlays\(r\)/,
   'existing playback overlay filtering must remain installed'
 );
+assert.equal(
+  (adblock.match(/handleAdPlaybackResponse/g) || []).length,
+  2,
+  'patched adblock should import and call the server-side ad skipper exactly once'
+);
+assert.match(
+  adblock,
+  /handleAdPlaybackResponse\(r\)/,
+  'exact ad-playback state responses should trigger player-level skipping'
+);
+assert.match(
+  adblock,
+  /from '\.\/ssai-ad-skipper'/,
+  'server-side ad skipper must be wired through the early adblock hook'
+);
 assert.doesNotMatch(
   adblock,
   /neutralizeStandaloneAdPlayback|ad-playback-state-filter/,
-  'failed standalone ad-playback mutation must be retired from revision 9'
+  'failed standalone ad-playback boolean mutation must remain retired'
 );
 
 const earlyAdblock = userScript.indexOf("import './adblock.js';");
@@ -84,4 +99,4 @@ assert.equal(
   'userScript must import DEV diagnostics exactly once'
 );
 
-console.log('adblock-integration: early adblock/Shorts wiring and retired ad-state mutation passed');
+console.log('adblock-integration: early filtering, SSAI skipping, and retired boolean mutation passed');
