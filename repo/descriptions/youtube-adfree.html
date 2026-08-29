@@ -1,6 +1,5 @@
-<p><strong>Added</strong> Diagnostics v6 playback-request section showing safe request structure, isInlinePlaybackNoAd state before and after patching, whether the copy-on-write patch ran, and whether the final serialized body actually contained isInlinePlaybackNoAd=true.</p>
-<p><strong>Added</strong> High-confidence Shorts recognition for direct renderer/view-model navigationEndpoint/onSelectCommand/onTap reelWatchEndpoint paths and direct Shorts content/style enums.</p>
-<p><strong>Added</strong> Privacy-safe Shorts URL-path clue detection for surviving schemas without retaining the URL itself.</p>
-<p><strong>Fixed</strong> Removed the revision 7 standalone isAdPlayback=true neutralizer after hardware testing proved that changing the boolean to false did not prevent the advertisement.</p>
-<p><strong>Fixed</strong> Remove Shorts now also suppresses direct Shorts guide/startup entries and modern direct reel-navigation card forms while the existing Remove Shorts toggle is enabled.</p>
+<p><strong>Added</strong> Player-level server-side ad skipping triggered only by an exact top-level isAdPlayback=true response.</p>
+<p><strong>Added</strong> A guarded HTMLVideoElement currentTime fallback when YouTube&#x27;s player seekTo API is unavailable.</p>
+<p><strong>Added</strong> Regression coverage for player-level ad skipping and its early adblock integration.</p>
+<p><strong>Fixed</strong> Targets the server-side ad path observed on hardware where isInlinePlaybackNoAd was already true, no known feed ad renderer survived, and the correlated player response carried adBreakHeartbeatParams plus sendSsdaiMissingAdBreakReasons.</p>
 <p>Based on <a href="https://github.com/webosbrew/youtube-webos">YouTube webOS 0.5.3</a></p>
