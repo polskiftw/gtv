@@ -1,4 +1,5 @@
-<p><strong>Added</strong> Experimental standalone ad-playback state neutralizer for the exact responseContext + trackingParams + isAdPlayback=true shape captured twice on real hardware.</p>
-<p><strong>Added</strong> Regression coverage proving the neutralizer ignores normal player responses, nested fields, false states, incomplete envelopes, and objects with additional top-level state.</p>
-<p><strong>Fixed</strong> Targeted the previously unhandled compact ad-playback state transition instead of broadening Home renderer deletion heuristics.</p>
+<p><strong>Added</strong> Shorts survivor diagnostics that record safe schema clues and object paths for Shorts/reel-looking array entries that were intentionally not removed by the known classifier.</p>
+<p><strong>Added</strong> On-TV diagnostics v5 summary counts and a dedicated Shorts survivor/signal inventory section.</p>
+<p><strong>Added</strong> Regression coverage for unknown Shorts-like schemas and for early Shorts hook installation.</p>
+<p><strong>Fixed</strong> Shorts could leak into the first rendered responses because upstream loaded shorts.js after app_api even though GTV had already moved adblock ahead of app_api.</p>
 <p>Based on <a href="https://github.com/webosbrew/youtube-webos">YouTube webOS 0.5.3</a></p>
