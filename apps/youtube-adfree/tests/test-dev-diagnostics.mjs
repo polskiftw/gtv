@@ -89,9 +89,12 @@ assert.equal(snapshot.removedFeedRenderers, 1);
 assert.equal(snapshot.knownMarkerResponses, 1);
 
 const devUi = await readFile(devUiPath, 'utf8');
-assert.match(devUi, /GTV DEV DIAGNOSTICS v4/);
+assert.match(devUi, /GTV DEV DIAGNOSTICS v5/);
 assert.match(devUi, /AD PLAYBACK EVENTS/);
 assert.match(devUi, /ENTITY PAYLOAD EVENTS/);
+assert.match(devUi, /SHORTS SURVIVOR DIAGNOSTICS/);
+assert.match(devUi, /getShortsDiagnosticsSnapshot/);
+assert.match(devUi, /Shorts-like survivors observed/);
 assert.match(devUi, /isAdPlayback=\$\{event\.value\}/);
 assert.match(devUi, /latest ad-playback event/);
 assert.match(devUi, /PAGE_ROW_BUDGET/);
@@ -102,4 +105,4 @@ assert.match(devUi, /window\.addEventListener\('keydown', handleKey, true\)/);
 assert.doesNotMatch(devUi, /ArrowUp|ArrowDown|scrollTop|PAGE_SCROLL_FRACTION/);
 assert.doesNotMatch(devUi, /console\.(log|debug|info)\(/);
 
-console.log('dev-diagnostics: targeted ad-playback/entity capture and paging contract passed');
+console.log('dev-diagnostics: ad/entity/Shorts diagnostics and paging contract passed');

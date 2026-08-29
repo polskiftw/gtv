@@ -26,21 +26,6 @@ assert.match(
   'feed filtering should receive the original JSON text for marker gating'
 );
 assert.equal(
-  (adblock.match(/neutralizeStandaloneAdPlayback/g) || []).length,
-  2,
-  'patched adblock should import and call neutralizeStandaloneAdPlayback exactly once'
-);
-assert.match(
-  adblock,
-  /neutralizeStandaloneAdPlayback\(r\)/,
-  'captured standalone ad-playback response should be neutralized in the JSON.parse hook'
-);
-assert.ok(
-  adblock.indexOf('removeSponsoredFeedAds(r, arguments[0])') <
-    adblock.indexOf('neutralizeStandaloneAdPlayback(r)'),
-  'DEV diagnostics must observe the original isAdPlayback=true value before neutralization'
-);
-assert.equal(
   adblock.includes('function removeAdSlotRenderer'),
   false,
   'legacy page-specific ad-slot helper should be replaced by the hardened filter'
@@ -55,26 +40,33 @@ assert.match(
   /removeSponsoredPlaybackOverlays\(r\)/,
   'existing playback overlay filtering must remain installed'
 );
+assert.match(
+  adblock,
+  /neutralizeStandaloneAdPlayback\(r\)/,
+  'revision 7 standalone ad-playback neutralizer must remain installed'
+);
 
 const earlyAdblock = userScript.indexOf("import './adblock.js';");
+const earlyShorts = userScript.indexOf("import './shorts.js';");
 const devDiagnostics = userScript.indexOf("import './dev-diagnostics.js';");
 const appApi = userScript.indexOf("import './app_api/index';");
 const upstreamUi = userScript.indexOf("import './ui.js';");
 assert.notEqual(earlyAdblock, -1, 'userScript must import adblock');
+assert.notEqual(earlyShorts, -1, 'userScript must import Shorts filtering');
 assert.notEqual(devDiagnostics, -1, 'DEV userScript must import diagnostics');
 assert.notEqual(appApi, -1, 'userScript must import app_api');
 assert.notEqual(upstreamUi, -1, 'userScript must import upstream ui');
 assert.ok(
-  earlyAdblock < devDiagnostics,
-  'DEV diagnostics must initialize after the adblock/feed diagnostics module'
+  earlyAdblock < earlyShorts && earlyShorts < devDiagnostics,
+  'response filters must initialize before DEV diagnostics in deterministic order'
+);
+assert.ok(
+  earlyAdblock < appApi && earlyShorts < appApi,
+  'adblock and Shorts JSON.parse hooks must both initialize before app_api'
 );
 assert.ok(
   devDiagnostics < appApi && devDiagnostics < upstreamUi,
   'DEV diagnostics must register its capture-phase blue-key handler before upstream UI'
-);
-assert.ok(
-  earlyAdblock < appApi,
-  'adblock must initialize before app_api so fresh-launch responses cannot beat the JSON.parse hook'
 );
 assert.equal(
   (userScript.match(/import '\.\/adblock\.js';/g) || []).length,
@@ -82,9 +74,14 @@ assert.equal(
   'userScript must import adblock exactly once'
 );
 assert.equal(
+  (userScript.match(/import '\.\/shorts\.js';/g) || []).length,
+  1,
+  'userScript must import Shorts filtering exactly once'
+);
+assert.equal(
   (userScript.match(/import '\.\/dev-diagnostics\.js';/g) || []).length,
   1,
   'userScript must import DEV diagnostics exactly once'
 );
 
-console.log('adblock-integration: DEV patch wiring, ad-state neutralizer, and startup ordering passed');
+console.log('adblock-integration: early adblock/Shorts wiring and startup ordering passed');

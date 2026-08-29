@@ -5,8 +5,121 @@ export const SHORTS_SIGNATURES = Object.freeze({
   contentType: 'TILE_CONTENT_TYPE_SHORTS'
 });
 
+const SHORTS_DIAGNOSTIC_RECENT_LIMIT = 12;
+const SHORTS_DIAGNOSTIC_INVENTORY_LIMIT = 48;
+const SHORTS_DIAGNOSTIC_SCAN_DEPTH = 4;
+const SHORTS_DIAGNOSTIC_SCAN_NODES = 96;
+const SHORTS_DIAGNOSTIC_CLUES_PER_ITEM = 8;
+const SHORTS_SIGNAL_PATTERN = /(short|reel)/i;
+const SHORTS_SAFE_SCALAR_KEYS = new Set([
+  'style',
+  'contentType',
+  'tvhtml5ShelfRendererType',
+  'type',
+  'targetId',
+  'browseId'
+]);
+
+const shortsDiagnostics = {
+  responsesScanned: 0,
+  removedKnown: 0,
+  suspiciousSurvivors: 0,
+  lastObservedAt: null,
+  recentSurvivors: [],
+  signalInventory: new Map()
+};
+
 function isObject(value) {
   return value !== null && typeof value === 'object';
+}
+
+function objectPath(parent, key) {
+  return parent === '$' ? `$.${key}` : `${parent}.${key}`;
+}
+
+function arrayPath(parent, index) {
+  return `${parent}[${index}]`;
+}
+
+function addShortsSignal(clues, clue) {
+  if (clues.length >= SHORTS_DIAGNOSTIC_CLUES_PER_ITEM || clues.includes(clue)) return;
+  clues.push(clue);
+}
+
+function recordInventory(clue, path) {
+  const existing = shortsDiagnostics.signalInventory.get(clue);
+  if (existing) {
+    existing.count += 1;
+    existing.lastPath = path;
+    return;
+  }
+  if (shortsDiagnostics.signalInventory.size >= SHORTS_DIAGNOSTIC_INVENTORY_LIMIT) return;
+  shortsDiagnostics.signalInventory.set(clue, { clue, count: 1, lastPath: path });
+}
+
+// Scan only object wrappers inside a surviving array entry. Nested arrays are
+// intentionally left to the main traversal so a Shorts-looking child does not
+// make a normal containing shelf disappear. Values retained here are limited to
+// schema-ish allowlisted fields; arbitrary titles, URLs, tokens and tracking data
+// are never stored by diagnostics.
+function collectSurvivorClues(item) {
+  if (!isObject(item) || Array.isArray(item)) return [];
+
+  const clues = [];
+  const stack = [{ value: item, depth: 0 }];
+  let visited = 0;
+
+  while (stack.length > 0 && visited < SHORTS_DIAGNOSTIC_SCAN_NODES) {
+    const current = stack.pop();
+    if (!isObject(current.value) || Array.isArray(current.value)) continue;
+    visited += 1;
+
+    const keys = Object.keys(current.value);
+    for (let index = 0; index < keys.length; index += 1) {
+      const key = keys[index];
+      const child = current.value[key];
+
+      if (SHORTS_SIGNAL_PATTERN.test(key)) {
+        addShortsSignal(clues, `key:${key}`);
+      }
+
+      if (
+        SHORTS_SAFE_SCALAR_KEYS.has(key) &&
+        typeof child === 'string' &&
+        SHORTS_SIGNAL_PATTERN.test(child)
+      ) {
+        const compact = child.replace(/\s+/g, ' ').trim();
+        addShortsSignal(clues, `${key}=${compact.slice(0, 96)}`);
+      }
+
+      if (
+        isObject(child) &&
+        !Array.isArray(child) &&
+        current.depth < SHORTS_DIAGNOSTIC_SCAN_DEPTH
+      ) {
+        stack.push({ value: child, depth: current.depth + 1 });
+      }
+    }
+  }
+
+  return clues;
+}
+
+function recordSuspiciousSurvivor(item, path) {
+  const clues = collectSurvivorClues(item);
+  if (clues.length === 0) return;
+
+  shortsDiagnostics.suspiciousSurvivors += 1;
+  const entry = {
+    path,
+    topKeys: Object.keys(item).slice(0, 10),
+    clues
+  };
+  shortsDiagnostics.recentSurvivors.push(entry);
+  if (shortsDiagnostics.recentSurvivors.length > SHORTS_DIAGNOSTIC_RECENT_LIMIT) {
+    shortsDiagnostics.recentSurvivors.shift();
+  }
+  clues.forEach((clue) => recordInventory(clue, path));
 }
 
 // Classify only the array entry itself (and its direct renderer). This is
@@ -44,24 +157,30 @@ export function isShortsEntry(item) {
 export function removeShortsEverywhere(root) {
   if (!isObject(root)) return 0;
 
-  const stack = [root];
+  shortsDiagnostics.responsesScanned += 1;
+  shortsDiagnostics.lastObservedAt = new Date().toISOString();
+
+  const stack = [{ value: root, path: '$' }];
   let removed = 0;
 
   while (stack.length > 0) {
-    const node = stack.pop();
+    const current = stack.pop();
+    const node = current.value;
 
     if (Array.isArray(node)) {
       let writeIndex = 0;
       for (let readIndex = 0; readIndex < node.length; readIndex += 1) {
         const value = node[readIndex];
+        const path = arrayPath(current.path, readIndex);
         if (isShortsEntry(value)) {
           removed += 1;
           continue;
         }
 
+        recordSuspiciousSurvivor(value, path);
         node[writeIndex] = value;
         writeIndex += 1;
-        if (isObject(value)) stack.push(value);
+        if (isObject(value)) stack.push({ value, path });
       }
       node.length = writeIndex;
       continue;
@@ -69,10 +188,32 @@ export function removeShortsEverywhere(root) {
 
     const keys = Object.keys(node);
     for (let index = 0; index < keys.length; index += 1) {
-      const value = node[keys[index]];
-      if (isObject(value)) stack.push(value);
+      const key = keys[index];
+      const value = node[key];
+      if (isObject(value)) {
+        stack.push({ value, path: objectPath(current.path, key) });
+      }
     }
   }
 
+  shortsDiagnostics.removedKnown += removed;
   return removed;
+}
+
+export function getShortsDiagnosticsSnapshot() {
+  return {
+    responsesScanned: shortsDiagnostics.responsesScanned,
+    removedKnown: shortsDiagnostics.removedKnown,
+    suspiciousSurvivors: shortsDiagnostics.suspiciousSurvivors,
+    lastObservedAt: shortsDiagnostics.lastObservedAt,
+    recentSurvivors: shortsDiagnostics.recentSurvivors.map((entry) => ({
+      path: entry.path,
+      topKeys: [...entry.topKeys],
+      clues: [...entry.clues]
+    })),
+    signalInventory: Array.from(shortsDiagnostics.signalInventory.values())
+      .sort((a, b) => b.count - a.count || a.clue.localeCompare(b.clue))
+      .slice(0, 24)
+      .map((entry) => ({ ...entry }))
+  };
 }

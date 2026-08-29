@@ -96,28 +96,39 @@ helper_start = adblock.index(legacy_helper_marker)
 adblock = adblock[:helper_start].rstrip() + "\n"
 adblock_path.write_text(adblock, encoding="utf-8")
 
-# Install the JSON.parse hook before app_api and the rest of the app bootstrap.
-# The DEV diagnostics import is placed immediately after adblock so its capture-
-# phase blue-key listener is registered before upstream ui.js claims that key.
+# Install both JSON.parse response filters before app_api and the rest of the app
+# bootstrap. DEV diagnostics follows them so Blue is claimed before upstream UI.
 user_script_path = source / "src" / "userScript.ts"
 user_script = user_script_path.read_text(encoding="utf-8")
 adblock_user_import = "import './adblock.js';\n"
+shorts_user_import = "import './shorts.js';\n"
 dev_diagnostics_import = "import './dev-diagnostics.js';\n"
 domrect_import = "import './domrect-polyfill';\n"
-late_import_pair = "import './app_api/index';\nimport './adblock.js';\n"
+late_import_block = (
+    "import './app_api/index';\n"
+    "import './adblock.js';\n"
+    "import './hooks/json-stringify';\n"
+    "import './shorts.js';\n"
+)
 if (
     user_script.count(adblock_user_import) != 1
+    or user_script.count(shorts_user_import) != 1
     or user_script.count(domrect_import) != 1
-    or user_script.count(late_import_pair) != 1
+    or user_script.count(late_import_block) != 1
     or dev_diagnostics_import in user_script
 ):
-    raise SystemExit("upstream userScript.ts import order changed; review early adblock/dev diagnostics patch")
+    raise SystemExit("upstream userScript.ts import order changed; review early response-filter patch")
+
 user_script = user_script.replace(
     domrect_import,
-    domrect_import + adblock_user_import + dev_diagnostics_import,
+    domrect_import + adblock_user_import + shorts_user_import + dev_diagnostics_import,
     1,
 )
-user_script = user_script.replace(late_import_pair, "import './app_api/index';\n", 1)
+user_script = user_script.replace(
+    late_import_block,
+    "import './app_api/index';\nimport './hooks/json-stringify';\n",
+    1,
+)
 user_script_path.write_text(user_script, encoding="utf-8")
 
 config_path = source / "src" / "config.js"

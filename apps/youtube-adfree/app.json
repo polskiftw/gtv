@@ -3,21 +3,22 @@
   "kind": "upstream-patch",
   "id": "youtube.leanback.v4",
   "title": "YouTube AdFree",
-  "version": "7690.5.3",
-  "gtvRevision": 7,
-  "shortDescription": "Development build that experimentally neutralizes the captured standalone ad-playback state response.",
-  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 7 keeps the revision 6 diagnostics and adds a deliberately narrow active experiment based on two real-TV captures: when AdBlock is enabled and a parsed response consists exactly of responseContext, trackingParams, and isAdPlayback=true, GTV preserves the response envelope but changes only isAdPlayback to false before YouTube consumes it. The diagnostics observer runs first, so the original true event remains visible in the on-TV report. Normal player responses, nested isAdPlayback fields, false states, and objects with any extra top-level fields are left untouched.",
+  "version": "8690.5.3",
+  "gtvRevision": 8,
+  "shortDescription": "Development build with early Shorts filtering, Shorts survivor diagnostics, and the captured ad-playback neutralizer.",
+  "description": "GTV development build of YouTube AdFree, built from webosbrew upstream 0.5.3. DEV revision 8 includes the revision 7 standalone isAdPlayback experiment, moves the Remove Shorts JSON.parse hook ahead of app_api to close the same fresh-launch timing window already fixed for ad blocking, and upgrades the on-TV report to diagnostics v5. The Shorts diagnostics count known removals and safely inventory Shorts/reel schema clues found in array entries that survived the conservative classifier, without retaining titles, tracking values, URLs, tokens, or arbitrary payload strings.",
   "changes": {
     "added": [
-      "Experimental standalone ad-playback state neutralizer for the exact responseContext + trackingParams + isAdPlayback=true shape captured twice on real hardware.",
-      "Regression coverage proving the neutralizer ignores normal player responses, nested fields, false states, incomplete envelopes, and objects with additional top-level state."
+      "Shorts survivor diagnostics that record safe schema clues and object paths for Shorts/reel-looking array entries that were intentionally not removed by the known classifier.",
+      "On-TV diagnostics v5 summary counts and a dedicated Shorts survivor/signal inventory section.",
+      "Regression coverage for unknown Shorts-like schemas and for early Shorts hook installation."
     ],
     "changed": [
-      "DEV diagnostics remain installed ahead of the neutralizer, so captured isAdPlayback=true events are recorded before the response is changed to false.",
-      "DEV version advanced to 7690.5.3 / GTV revision 7 for over-the-air testing."
+      "The Shorts JSON.parse hook now initializes beside adblock before app_api, closing the fresh-launch response race that could let initial Home Shorts render before filtering was installed.",
+      "DEV version advanced to 8690.5.3 / GTV revision 8 while retaining the revision 7 exact-shape isAdPlayback=true neutralizer."
     ],
     "fixed": [
-      "Targeted the previously unhandled compact ad-playback state transition instead of broadening Home renderer deletion heuristics."
+      "Shorts could leak into the first rendered responses because upstream loaded shorts.js after app_api even though GTV had already moved adblock ahead of app_api."
     ]
   },
   "rootRequired": false,

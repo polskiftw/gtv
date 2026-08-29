@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 const modulePath = resolve(process.argv[2] || new URL('../patches/shorts-filter.js', import.meta.url).pathname);
 const source = await readFile(modulePath, 'utf8');
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
-const { isShortsEntry, removeShortsEverywhere } = await import(moduleUrl);
+const { isShortsEntry, removeShortsEverywhere, getShortsDiagnosticsSnapshot } = await import(moduleUrl);
 
 const normalTile = (id) => ({
   tileRenderer: {
@@ -28,7 +28,6 @@ const shortShelf = () => ({
   }
 });
 
-// Every currently known Shorts identity used by YouTube TV/webOS responses.
 assert.equal(isShortsEntry(shortEndpoint('endpoint')), true);
 assert.equal(isShortsEntry(shortStyle('style')), true);
 assert.equal(isShortsEntry(shortContentType('content-type')), true);
@@ -38,8 +37,6 @@ assert.equal(isShortsEntry({ onSelectCommand: { reelWatchEndpoint: { videoId: 'd
 assert.equal(isShortsEntry(shortShelf()), true);
 assert.equal(isShortsEntry(normalTile('normal')), false);
 
-// One object intentionally contains every outer response family we need to
-// support. The filter must not care which page supplied the containing path.
 const response = {
   home: {
     contents: {
@@ -78,7 +75,6 @@ const response = {
   subscriptionsA: {
     gridRenderer: { items: [normalTile('sub-normal-a'), shortEndpoint('sub-short-a')] }
   },
-  // Regression for upstream's first-match search: both grids must be filtered.
   subscriptionsB: {
     gridRenderer: { items: [shortEndpoint('sub-short-b'), normalTile('sub-normal-b')] }
   },
@@ -110,7 +106,6 @@ const response = {
     }
   ],
   unrelated: [
-    // Nested reel metadata is not a direct renderer signature and must survive.
     { metadata: { reelWatchEndpoint: { videoId: 'reference-only' } }, keep: true },
     'primitive'
   ]
@@ -150,10 +145,52 @@ assert.equal(response.unrelated[0].keep, true);
 assert.equal(response.unrelated[0].metadata.reelWatchEndpoint.videoId, 'reference-only');
 assert.equal(response.unrelated[1], 'primitive');
 
+let diagnostics = getShortsDiagnosticsSnapshot();
+assert.equal(diagnostics.responsesScanned, 1);
+assert.equal(diagnostics.removedKnown, 12);
+assert.ok(diagnostics.suspiciousSurvivors >= 1);
+assert.ok(
+  diagnostics.recentSurvivors.some((entry) =>
+    entry.clues.some((clue) => clue === 'key:reelWatchEndpoint')
+  ),
+  'nested reel metadata that intentionally survives should be visible to diagnostics'
+);
+
+const futureSchema = {
+  items: [
+    {
+      lockupViewModel: {
+        contentType: 'YOUTUBE_SHORTS_LOCKUP_2026',
+        command: { shortsNavigationEndpoint: {} },
+        trackingParams: 'secret-shorts-tracking-must-not-be-retained'
+      }
+    },
+    normalTile('future-normal')
+  ]
+};
+assert.equal(removeShortsEverywhere(futureSchema), 0);
+diagnostics = getShortsDiagnosticsSnapshot();
+assert.equal(diagnostics.responsesScanned, 2);
+assert.ok(
+  diagnostics.recentSurvivors.some((entry) =>
+    entry.clues.includes('contentType=YOUTUBE_SHORTS_LOCKUP_2026') &&
+    entry.clues.includes('key:shortsNavigationEndpoint')
+  ),
+  'unknown Shorts-like schemas must be surfaced without being deleted blindly'
+);
+assert.equal(
+  JSON.stringify(diagnostics).includes('secret-shorts-tracking-must-not-be-retained'),
+  false,
+  'diagnostics must not retain arbitrary tracking values'
+);
+assert.ok(
+  diagnostics.signalInventory.some((entry) => entry.clue === 'key:shortsNavigationEndpoint')
+);
+
 assert.equal(removeShortsEverywhere(null), 0);
 assert.equal(removeShortsEverywhere('not-json-object'), 0);
 const normalOnly = { items: [normalTile('normal-only')] };
 assert.equal(removeShortsEverywhere(normalOnly), 0);
 assert.equal(normalOnly.items.length, 1);
 
-console.log('shorts-filter: all schema and regression tests passed');
+console.log('shorts-filter: removal and survivor diagnostics regressions passed');
