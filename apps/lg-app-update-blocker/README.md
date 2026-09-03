@@ -1,6 +1,6 @@
-# LG App Update Blocker — remote navigation patch
+# LG App Update Blocker — GTV patch
 
-A maintained patch of [`dr0dr1dr2dr3/lgappupdateblocker`](https://github.com/dr0dr1dr2dr3/lgappupdateblocker) that adds usable 5-way remote navigation to the application's TV interface.
+A maintained patch of [`dr0dr1dr2dr3/lgappupdateblocker`](https://github.com/dr0dr1dr2dr3/lgappupdateblocker) that adds usable 5-way remote navigation and repairs update-domain persistence across TV reboots.
 
 ## Changes
 
@@ -9,9 +9,13 @@ A maintained patch of [`dr0dr1dr2dr3/lgappupdateblocker`](https://github.com/dr0
 - Visible focus styling.
 - Automatic scrolling to the focused control.
 - Focus recovery when controls become enabled after service elevation.
+- Reboot-safe update-domain persistence using a direct root boot hook instead of an early-boot Luna service call.
+- Existing persistence hooks are upgraded in place rather than rejected just because the file already exists.
+- Persistence status validates the current hook and its stored domain list instead of checking file existence alone.
+- Host removal and status checks use the packaged domain list rather than assuming a particular domain suffix.
 - A locally adaptive neon `g` on the original icon that identifies the `gtv` build.
 
-The blocking service behavior is unchanged.
+The persistence hook is stored under `/var/lib/webosbrew/init.d/` because Homebrew Channel regenerates `/etc/hosts` at boot before running user init hooks. The hook keeps a persistent copy of the packaged domain list under `/var/lib/webosbrew/appupdateblocker/` and reapplies it directly to the freshly generated hosts file. It does not wait for, recurse through, or self-delete based on Luna service availability.
 
 ## Upstream
 
