@@ -29,6 +29,17 @@ if script_marker not in text:
     raise SystemExit("index.html script insertion point not found")
 html.write_text(text.replace(script_marker, script_insert, 1))
 
+service = source / "service" / "service.js"
+service_text = service.read_text()
+persistence_start = "var autostartScript ="
+persistence_end = "const SSH_KEYS_PATH = '/home/root/.ssh/authorized_keys';"
+if service_text.count(persistence_start) != 1 or service_text.count(persistence_end) != 1:
+    raise SystemExit("service.js persistence patch anchors no longer match pinned upstream")
+start = service_text.index(persistence_start)
+end = service_text.index(persistence_end)
+replacement = (patches / "service-persistence.js").read_text().rstrip() + "\n\n"
+service.write_text(service_text[:start] + replacement + service_text[end:])
+
 webpack = source / "webpack.config.js"
 text = webpack.read_text()
 copy_marker = "          { context: 'frontend', from: 'index.html' },"

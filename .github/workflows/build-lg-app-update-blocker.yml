@@ -2,6 +2,19 @@ name: Build LG App Update Blocker
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/lg-app-update-blocker/**'
+      - 'branding/**'
+      - 'scripts/badge_finish.py'
+      - 'scripts/build-smart-icon.py'
+      - 'scripts/icon_sources.py'
+      - 'scripts/prepare-branding-font.py'
+      - 'scripts/smart_badge.py'
+      - 'scripts/test-icon-sources.py'
+      - 'scripts/test-smart-icon.py'
+      - 'scripts/test-versioning.py'
+      - 'scripts/versioning.py'
   push:
     branches: [main]
     paths:
@@ -69,6 +82,7 @@ jobs:
           git -C "$SRC" checkout 9e48b292ce8fc7e776feb85763314e66c2061d02
 
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
+          node "$APP_DIR/tests/test-persistence-patch.mjs" "$SRC/service/service.js"
           python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
             --metadata "$APP_DIR/app.json" \
             --source "$SRC" \
@@ -109,6 +123,7 @@ jobs:
         run: cp "$RUNNER_TEMP/youtube-adfree-main-app.json" apps/youtube-adfree/app.json
 
       - name: Publish generated repository
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
           set -euo pipefail
