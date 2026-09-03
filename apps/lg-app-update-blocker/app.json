@@ -3,15 +3,17 @@
   "kind": "upstream-patch",
   "id": "org.webosbrew.appupdateblocker",
   "title": "LG App Update Blocker",
-  "version": "691.0.0",
-  "gtvRevision": 0,
+  "version": "1691.0.0",
+  "gtvRevision": 1,
   "shortDescription": "LG update blocker with TV remote navigation.",
-  "description": "LG App Update Blocker with 5-way remote navigation, visible focus, OK-button support, deterministic startup focus, and safe exclusion of text-entry fields from D-pad navigation.",
+  "description": "LG App Update Blocker with 5-way remote navigation, visible focus, OK-button support, deterministic startup focus, safe exclusion of text-entry fields from D-pad navigation, and reliable reboot persistence for the blocked update-domain list.",
   "changes": {
     "added": [
       "Five-way TV remote navigation with visible focus and OK-button support."
     ],
-    "fixed": []
+    "fixed": [
+      "Update-domain blocking now persists reliably across TV reboots without depending on service startup timing."
+    ]
   },
   "rootRequired": true,
   "requirements": {
