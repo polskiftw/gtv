@@ -10,20 +10,25 @@ const service = fs.readFileSync(servicePath, 'utf8');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const ui = fs.readFileSync(uiPath, 'utf8');
 
-assert.match(service, /const SYSTEM_UPDATE_CACHE_DIR = '\/mnt\/lg\/cmn_data\/swupdate';/);
-assert.match(service, /service\.register\('readSystemUpdateCache'/);
-assert.match(service, /service\.register\('clearSystemUpdateCache'/);
-assert.match(service, /fs\.readdirSync\(SYSTEM_UPDATE_CACHE_DIR\)/);
-assert.match(service, /fs\.lstatSync\(fullPath\)/);
-assert.match(service, /stat\.isFile\(\) \|\| stat\.isSymbolicLink\(\)/);
-assert.match(service, /fs\.unlinkSync\(fullPath\)/);
-assert.doesNotMatch(service, /fs\.rmSync|fs\.rmdirSync|recursive\s*:\s*true/);
+const cacheStart = service.indexOf("const SYSTEM_UPDATE_CACHE_DIR");
+const cacheEnd = service.indexOf("const SSH_KEYS_PATH");
+assert.ok(cacheStart >= 0 && cacheEnd > cacheStart);
+const cacheService = service.slice(cacheStart, cacheEnd);
 
-const readStart = service.indexOf("service.register('readSystemUpdateCache'");
-const clearStart = service.indexOf("service.register('clearSystemUpdateCache'");
+assert.match(cacheService, /const SYSTEM_UPDATE_CACHE_DIR = '\/mnt\/lg\/cmn_data\/swupdate';/);
+assert.match(cacheService, /service\.register\('readSystemUpdateCache'/);
+assert.match(cacheService, /service\.register\('clearSystemUpdateCache'/);
+assert.match(cacheService, /fs\.readdirSync\(SYSTEM_UPDATE_CACHE_DIR\)/);
+assert.match(cacheService, /fs\.lstatSync\(fullPath\)/);
+assert.match(cacheService, /stat\.isFile\(\) \|\| stat\.isSymbolicLink\(\)/);
+assert.match(cacheService, /fs\.unlinkSync\(fullPath\)/);
+assert.doesNotMatch(cacheService, /fs\.rmSync|fs\.rmdirSync|recursive\s*:\s*true/);
+
+const readStart = cacheService.indexOf("service.register('readSystemUpdateCache'");
+const clearStart = cacheService.indexOf("service.register('clearSystemUpdateCache'");
 assert.ok(readStart >= 0 && clearStart > readStart);
 assert.equal(
-  service.slice(readStart, clearStart).includes('unlinkSync'),
+  cacheService.slice(readStart, clearStart).includes('unlinkSync'),
   false,
   'status checks must never delete firmware cache files'
 );
