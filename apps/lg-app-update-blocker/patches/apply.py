@@ -15,16 +15,46 @@ version = metadata["version"]
 
 shutil.copy2(patches / "remote-navigation.js", source / "frontend" / "remote-navigation.js")
 shutil.copy2(patches / "remote-focus.css", source / "frontend" / "remote-focus.css")
+shutil.copy2(patches / "firmware-cache-ui.js", source / "frontend" / "firmware-cache-ui.js")
 
 html = source / "frontend" / "index.html"
 text = html.read_text()
+
 style_marker = "    </style>\n</head>"
 style_insert = "    </style>\n    <link rel=\"stylesheet\" href=\"remote-focus.css\">\n</head>"
 if style_marker not in text:
     raise SystemExit("index.html style insertion point not found")
 text = text.replace(style_marker, style_insert, 1)
+
+ssh_card_marker = """    <div class="card" style="margin: 0 0 20px 0;">
+        <div class="section">
+            <h2>SSH Key Management</h2>"""
+firmware_card = """    <div class="card" style="margin: 0 0 20px 0;">
+        <div class="section">
+            <h2>System Firmware Update Cache</h2>
+            <p>Inspect and clear cached system-update state without using SSH.</p>
+            <div id="firmwareCacheStatus" style="margin: 15px 0; font-weight: bold;">Waiting for root service...</div>
+            <button id="refreshFirmwareCache" disabled>Refresh Firmware Cache</button>
+            <button id="clearFirmwareCache" disabled>Delete Firmware Update Cache</button>
+            <div id="firmwareCacheContent" class="update-info" style="margin: 15px 0;">Waiting...</div>
+            <p style="color: var(--text-secondary); font-size: 14px;">
+                Cleanup is limited to files and symlinks directly inside
+                <code>/mnt/lg/cmn_data/swupdate/</code>. Directories are never removed.
+            </p>
+        </div>
+    </div>
+
+"""
+if ssh_card_marker not in text:
+    raise SystemExit("index.html SSH card insertion point not found")
+text = text.replace(ssh_card_marker, firmware_card + ssh_card_marker, 1)
+
 script_marker = '    <script src="index.js"></script>'
-script_insert = script_marker + '\n    <script src="remote-navigation.js"></script>'
+script_insert = (
+    script_marker
+    + '\n    <script src="firmware-cache-ui.js"></script>'
+    + '\n    <script src="remote-navigation.js"></script>'
+)
 if script_marker not in text:
     raise SystemExit("index.html script insertion point not found")
 html.write_text(text.replace(script_marker, script_insert, 1))
@@ -37,13 +67,23 @@ if service_text.count(persistence_start) != 1 or service_text.count(persistence_
     raise SystemExit("service.js persistence patch anchors no longer match pinned upstream")
 start = service_text.index(persistence_start)
 end = service_text.index(persistence_end)
-replacement = (patches / "service-persistence.js").read_text().rstrip() + "\n\n"
+replacement = (
+    (patches / "service-persistence.js").read_text().rstrip()
+    + "\n\n"
+    + (patches / "firmware-cache-service.js").read_text().rstrip()
+    + "\n\n"
+)
 service.write_text(service_text[:start] + replacement + service_text[end:])
 
 webpack = source / "webpack.config.js"
 text = webpack.read_text()
 copy_marker = "          { context: 'frontend', from: 'index.html' },"
-copy_insert = "          { context: 'frontend', from: '*.html' },\n          { context: 'frontend', from: '*.css' },\n          { context: 'frontend', from: 'remote-navigation.js' },"
+copy_insert = (
+    "          { context: 'frontend', from: '*.html' },\n"
+    "          { context: 'frontend', from: '*.css' },\n"
+    "          { context: 'frontend', from: 'firmware-cache-ui.js' },\n"
+    "          { context: 'frontend', from: 'remote-navigation.js' },"
+)
 if copy_marker not in text:
     raise SystemExit("webpack frontend copy rule not found")
 text = text.replace(copy_marker, copy_insert, 1)

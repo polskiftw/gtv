@@ -83,6 +83,7 @@ jobs:
 
           python3 "$APP_DIR/patches/apply.py" "$SRC" "$APP_DIR/patches" "$APP_DIR/app.json"
           node "$APP_DIR/tests/test-persistence-patch.mjs" "$SRC/service/service.js"
+          node "$APP_DIR/tests/test-firmware-cache-patch.mjs" "$SRC/service/service.js" "$SRC/frontend/index.html" "$SRC/frontend/firmware-cache-ui.js"
           python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
             --metadata "$APP_DIR/app.json" \
             --source "$SRC" \
