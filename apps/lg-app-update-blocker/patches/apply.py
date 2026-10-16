@@ -16,6 +16,7 @@ version = metadata["version"]
 shutil.copy2(patches / "remote-navigation.js", source / "frontend" / "remote-navigation.js")
 shutil.copy2(patches / "remote-focus.css", source / "frontend" / "remote-focus.css")
 shutil.copy2(patches / "firmware-cache-ui.js", source / "frontend" / "firmware-cache-ui.js")
+shutil.copy2(patches / "app-dependency-ui.js", source / "frontend" / "app-dependency-ui.js")
 
 html = source / "frontend" / "index.html"
 text = html.read_text()
@@ -47,12 +48,29 @@ firmware_card = """    <div class="card" style="margin: 0 0 20px 0;">
 """
 if ssh_card_marker not in text:
     raise SystemExit("index.html SSH card insertion point not found")
-text = text.replace(ssh_card_marker, firmware_card + ssh_card_marker, 1)
+dependency_card = """    <div class="card" style="margin: 0 0 20px 0;">
+        <div class="section">
+            <h2>App Update Dependency Cache</h2>
+            <p>Inspect and clear the secondary app-update dependency state separately from the standard forced-update list.</p>
+            <div id="updateDependencyStatus" style="margin: 15px 0; font-weight: bold;">Waiting for root service...</div>
+            <button id="refreshUpdateDependencyInfo" disabled>Refresh Dependency Status</button>
+            <button id="clearUpdateDependencyInfo" disabled>Clear Dependency Update Info</button>
+            <div id="updateDependencyContent" class="update-info" style="margin: 15px 0;">Waiting...</div>
+            <p style="color: var(--text-secondary); font-size: 14px;">
+                This controls only <code>com.webos.appInstallService/updateDependencyInfo</code>.
+                The original blocked-apps list is not modified by this button.
+            </p>
+        </div>
+    </div>
+
+"""
+text = text.replace(ssh_card_marker, dependency_card + firmware_card + ssh_card_marker, 1)
 
 script_marker = '    <script src="index.js"></script>'
 script_insert = (
     script_marker
     + '\n    <script src="firmware-cache-ui.js"></script>'
+    + '\n    <script src="app-dependency-ui.js"></script>'
     + '\n    <script src="remote-navigation.js"></script>'
 )
 if script_marker not in text:
@@ -72,6 +90,8 @@ replacement = (
     + "\n\n"
     + (patches / "firmware-cache-service.js").read_text().rstrip()
     + "\n\n"
+    + (patches / "app-dependency-service.js").read_text().rstrip()
+    + "\n\n"
 )
 service.write_text(service_text[:start] + replacement + service_text[end:])
 
@@ -82,6 +102,7 @@ copy_insert = (
     "          { context: 'frontend', from: '*.html' },\n"
     "          { context: 'frontend', from: '*.css' },\n"
     "          { context: 'frontend', from: 'firmware-cache-ui.js' },\n"
+    "          { context: 'frontend', from: 'app-dependency-ui.js' },\n"
     "          { context: 'frontend', from: 'remote-navigation.js' },"
 )
 if copy_marker not in text:
