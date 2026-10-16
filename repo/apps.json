@@ -15,24 +15,24 @@
       "manifestUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/manifests/lg-app-update-blocker.json",
       "manifest": {
         "id": "org.webosbrew.appupdateblocker",
-        "version": "2691.0.0",
+        "version": "3691.0.0",
         "type": "web",
         "title": "LG App Update Blocker",
-        "appDescription": "LG App Update Blocker with 5-way remote navigation, visible focus, OK-button support, deterministic startup focus, safe exclusion of text-entry fields from D-pad navigation, reliable reboot persistence for the blocked update-domain list, and on-TV inspection and cleanup of the system firmware update cache without SSH.",
+        "appDescription": "LG App Update Blocker with 5-way remote navigation, reliable reboot-persistent update domain blocking, independent on-TV inspection and clearing of the secondary app-update dependency cache, and system firmware update cache cleanup without SSH.",
         "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/lg-app-update-blocker.png",
         "sourceUrl": "https://github.com/dr0dr1dr2dr3/lgappupdateblocker",
         "rootRequired": true,
         "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
         "ipkHash": {
-          "sha256": "5b1f8094f9d9deb2b98653fb62fc5335818768081268d5639d2636ab31dad300"
+          "sha256": "92e77534a4ecd3be8448565e1f3073f323960711998ca1bec462ea3ef18c21c0"
         },
-        "ipkSize": 114794
+        "ipkSize": 116328
       },
       "pool": "main",
       "requirements": {
         "webosRelease": ">=5.0"
       },
-      "shortDescription": "LG update blocker with remote navigation and firmware-cache cleanup.",
+      "shortDescription": "LG update blocker with app dependency and firmware cache controls.",
       "fullDescriptionUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/descriptions/lg-app-update-blocker.html"
     },
     {
