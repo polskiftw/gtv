@@ -17,6 +17,7 @@ shutil.copy2(patches / "remote-navigation.js", source / "frontend" / "remote-nav
 shutil.copy2(patches / "remote-focus.css", source / "frontend" / "remote-focus.css")
 shutil.copy2(patches / "firmware-cache-ui.js", source / "frontend" / "firmware-cache-ui.js")
 shutil.copy2(patches / "app-dependency-ui.js", source / "frontend" / "app-dependency-ui.js")
+shutil.copy2(patches / "app-launch-ui.js", source / "frontend" / "app-launch-ui.js")
 
 html = source / "frontend" / "index.html"
 text = html.read_text()
@@ -64,13 +65,39 @@ dependency_card = """    <div class="card" style="margin: 0 0 20px 0;">
     </div>
 
 """
-text = text.replace(ssh_card_marker, dependency_card + firmware_card + ssh_card_marker, 1)
+launch_diagnostic_card = """    <div class="card" style="margin: 0 0 20px 0;">
+        <div class="section">
+            <h2>Live App Launch Diagnostic</h2>
+            <p>Check an installed app against the known update lists and test launching it without a launch-time update check.
+               This does not install an update or modify any application.</p>
+            <div id="launchInventoryStatus" style="margin: 15px 0; font-weight: bold;">Waiting for root service...</div>
+            <button id="refreshLaunchApps" disabled>Load Installed Apps</button>
+            <button id="previousLaunchPage" disabled>Previous Page</button>
+            <button id="nextLaunchPage" disabled>Next Page</button>
+            <div id="launchAppList" class="update-info" style="margin: 15px 0;">Waiting...</div>
+            <div id="selectedLaunchApp" style="margin: 15px 0;">Select an installed app above.</div>
+            <button id="inspectLaunchApp" disabled>Inspect Update Gate</button>
+            <button id="launchWithoutUpdateCheck" disabled>Launch Without Update Check</button>
+            <div id="launchDiagnosticResult" class="update-info" style="margin: 15px 0;">No app inspected yet.</div>
+            <h3>Last launch test</h3>
+            <div id="launchDiagnosticHistory" class="update-info" style="margin: 15px 0;">No launch test attempted.</div>
+            <p style="color: var(--text-secondary); font-size: 14px;">
+                The test sends <code>checkUpdateOnLaunch:false</code> to the webOS application manager.
+                A successful request does not guarantee the app opened or bypassed a prompt.
+                If the original app itself requires an update, this cannot override it.
+            </p>
+        </div>
+    </div>
+
+"""
+text = text.replace(ssh_card_marker, launch_diagnostic_card + dependency_card + firmware_card + ssh_card_marker, 1)
 
 script_marker = '    <script src="index.js"></script>'
 script_insert = (
     script_marker
     + '\n    <script src="firmware-cache-ui.js"></script>'
     + '\n    <script src="app-dependency-ui.js"></script>'
+    + '\n    <script src="app-launch-ui.js"></script>'
     + '\n    <script src="remote-navigation.js"></script>'
 )
 if script_marker not in text:
@@ -103,6 +130,7 @@ copy_insert = (
     "          { context: 'frontend', from: '*.css' },\n"
     "          { context: 'frontend', from: 'firmware-cache-ui.js' },\n"
     "          { context: 'frontend', from: 'app-dependency-ui.js' },\n"
+    "          { context: 'frontend', from: 'app-launch-ui.js' },\n"
     "          { context: 'frontend', from: 'remote-navigation.js' },"
 )
 if copy_marker not in text:
@@ -110,6 +138,20 @@ if copy_marker not in text:
 text = text.replace(copy_marker, copy_insert, 1)
 text = text.replace("        });``", "        });")
 webpack.write_text(text)
+
+
+# The public application-manager launch/status methods require these webOS TV ACGs.
+# The private app inventory is read separately via the already-rooted Homebrew service.
+appinfo = source / "appinfo.json"
+appinfo_data = json.loads(appinfo.read_text())
+acgs = appinfo_data.get("requiredACG", [])
+if not isinstance(acgs, list):
+    raise SystemExit("unexpected requiredACG type in upstream appinfo.json")
+for acg in ("application.launcher", "application.query"):
+    if acg not in acgs:
+        acgs.append(acg)
+appinfo_data["requiredACG"] = acgs
+appinfo.write_text(json.dumps(appinfo_data, indent=2) + "\n")
 
 package = source / "package.json"
 data = json.loads(package.read_text())
