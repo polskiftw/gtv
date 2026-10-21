@@ -1,15 +1,15 @@
 {
   "id": "org.webosbrew.appupdateblocker",
-  "version": "4691.0.0",
+  "version": "5691.0.0",
   "type": "web",
   "title": "LG App Update Blocker",
-  "appDescription": "LG App Update Blocker with 5-way remote navigation, reboot-persistent update-domain blocking, app-update cache inspection and clearing, a read-only installed-app/update-gate diagnostic, opt-in launch without checkUpdateOnLaunch, and firmware update-cache controls.",
+  "appDescription": "LG App Update Blocker with original Home icon launch-policy override for Content Store apps, reversible per-app backups, opt-in update-free app launching, diagnostic tools, persistent update-domain blocking, and firmware/update-cache controls.",
   "iconUri": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/icons/lg-app-update-blocker.png",
   "sourceUrl": "https://github.com/dr0dr1dr2dr3/lgappupdateblocker",
   "rootRequired": true,
   "ipkUrl": "https://raw.githubusercontent.com/polskiftw/gtv/main/repo/packages/lg-app-update-blocker.ipk",
   "ipkHash": {
-    "sha256": "cccd11cca94d90614f48b617642ac2b5e58b7ff4607cbefab060b76ad264b07b"
+    "sha256": "89241e3b91439d9c0bdc849f05b4ef603d62b3a97a0d64855acf7d7852a0a237"
   },
-  "ipkSize": 119978
+  "ipkSize": 123120
 }

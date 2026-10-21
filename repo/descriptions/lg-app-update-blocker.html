@@ -3,5 +3,7 @@
 <p><strong>Added</strong> Secondary app-update dependency state can be inspected and cleared separately from the standard forced-update list, without SSH.</p>
 <p><strong>Added</strong> Installed-app inventory with per-app version, manifest update-check flag and live update-cache inspection.</p>
 <p><strong>Added</strong> Opt-in direct app launch using checkUpdateOnLaunch:false, with persisted diagnostic result and no update installation.</p>
+<p><strong>Added</strong> Reversible original Home icon fix: save the previous Content Store appinfo launch setting, set checkUpdateOnLaunch:false, and restore on demand.</p>
 <p><strong>Fixed</strong> Update-domain blocking now persists reliably across TV reboots without depending on service startup timing.</p>
+<p><strong>Fixed</strong> No extra launcher or duplicate Home icon is needed for supported Content Store apps; one full reboot reloads the updated app metadata.</p>
 <p>Based on <a href="https://github.com/dr0dr1dr2dr3/lgappupdateblocker">LG App Update Blocker 1.0.0</a></p>
