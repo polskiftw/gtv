@@ -80,9 +80,10 @@ launch_diagnostic_card = """    <div class="card" style="margin: 0 0 20px 0;">
             <button id="launchWithoutUpdateCheck" disabled>Launch Without Update Check</button>
             <h3>Use the Original Home Screen Icon</h3>
             <p>Apply the same no-update-check policy to the installed app. The original icon stays where it is. One full TV restart is required.</p>
-            <div id="homeLaunchPolicyStatus" style="margin: 15px 0;">Select an app to check its Home icon launch setting.</div>
+            <div id="homeLaunchPolicyStatus" class="update-info" style="margin: 15px 0;">Select an app to check its Home icon launch setting.</div>
             <button id="enableHomeLaunchOverride" disabled>Fix Original Home Icon</button>
             <button id="restoreHomeLaunchOverride" disabled>Restore Original Launch Setting</button>
+            <div id="homeLaunchActionResult" class="update-info" style="margin: 15px 0;" role="status">No Home icon change requested.</div>
             <div id="launchDiagnosticResult" class="update-info" style="margin: 15px 0;">No app inspected yet.</div>
             <h3>Last launch test</h3>
             <div id="launchDiagnosticHistory" class="update-info" style="margin: 15px 0;">No launch test attempted.</div>

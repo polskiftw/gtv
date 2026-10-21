@@ -13,7 +13,7 @@ const appinfo = JSON.parse(fs.readFileSync(appinfoPath, 'utf8'));
 for (const id of ['refreshLaunchApps', 'previousLaunchPage', 'nextLaunchPage',
     'launchAppList', 'launchInventoryStatus', 'selectedLaunchApp', 'inspectLaunchApp',
     'launchWithoutUpdateCheck', 'launchDiagnosticResult', 'launchDiagnosticHistory',
-    'enableHomeLaunchOverride', 'restoreHomeLaunchOverride', 'homeLaunchPolicyStatus']) {
+    'enableHomeLaunchOverride', 'restoreHomeLaunchOverride', 'homeLaunchPolicyStatus', 'homeLaunchActionResult']) {
     assert.ok(html.includes('id="' + id + '"'), 'missing launch diagnostic UI element: ' + id);
 }
 assert.ok(html.includes('<script src="app-launch-ui.js"></script>'));
@@ -46,11 +46,12 @@ function element(id) {
 const ids = ['refreshLaunchApps', 'previousLaunchPage', 'nextLaunchPage',
     'launchAppList', 'launchInventoryStatus', 'selectedLaunchApp', 'inspectLaunchApp',
     'launchWithoutUpdateCheck', 'launchDiagnosticResult', 'launchDiagnosticHistory',
-    'enableHomeLaunchOverride', 'restoreHomeLaunchOverride', 'homeLaunchPolicyStatus', 'refreshUpdateInfo'];
+    'enableHomeLaunchOverride', 'restoreHomeLaunchOverride', 'homeLaunchPolicyStatus', 'homeLaunchActionResult', 'refreshUpdateInfo'];
 const elements = Object.fromEntries(ids.map(id => [id, element(id)]));
 elements.refreshUpdateInfo.disabled = false;
 const requests = [];
 const storage = new Map();
+let failHomeOverride = false;
 const tv = {
     service: {
         request(service, request) {
@@ -62,7 +63,7 @@ const tv = {
                 assert.ok(!request.parameters.command.includes('com.example.video'),
                     'inventory shell command must never incorporate an app ID');
                 response = { returnValue: true, stdoutString: JSON.stringify({ returnValue: true, apps: [
-                    { id: 'com.example.video', title: 'Video', version: '1.3', systemApp: false, checkUpdateOnLaunch: true },
+                    { id: 'com.example.video', title: 'Video', version: '1.3', folderPath: '/media/cryptofs/apps/usr/palm/applications/com.example.video', systemApp: false, checkUpdateOnLaunch: true },
                     { id: 'com.example.other', title: 'Another', systemApp: false },
                     { id: 'com.example.injected;touch /tmp/pwn', title: '<img src=x>' }
                 ] }) };
@@ -70,8 +71,12 @@ const tv = {
                 response = { returnValue: true, supported: true, managed: !!storage.get('homeOverride'),
                     disabledOnDisk: !!storage.get('homeOverride') };
             } else if (request.method === 'enableHomeLaunchOverride') {
-                storage.set('homeOverride', true);
-                response = { returnValue: true, message: 'Override saved, reboot TV' };
+                if (failHomeOverride) {
+                    response = { returnValue: false, errorText: 'simulated read-only app directory' };
+                } else {
+                    storage.set('homeOverride', true);
+                    response = { returnValue: true, message: 'Override saved, reboot TV' };
+                }
             } else if (request.method === 'restoreHomeLaunchOverride') {
                 storage.delete('homeOverride');
                 response = { returnValue: true, message: 'Original policy restored' };
@@ -95,7 +100,6 @@ vm.runInNewContext(source, {
     document: { getElementById(id) { return elements[id] || null; }, createElement(tag) { return element(tag); } },
     localStorage: { setItem(k, v) { storage.set(k, v); }, getItem(k) { return storage.get(k) || null; } },
     MutationObserver: class { observe() {} disconnect() {} },
-    confirm: () => true,
     Date, JSON, Object, Number, String, Math, Array
 });
 
@@ -112,6 +116,7 @@ assert.equal(elements.launchWithoutUpdateCheck.disabled, false);
 assert.equal(elements.enableHomeLaunchOverride.disabled, false, 'app can be configured for original Home icon');
 assert.equal(elements.restoreHomeLaunchOverride.disabled, true);
 assert.match(elements.selectedLaunchApp.textContent, /checkUpdateOnLaunch: true/);
+assert.match(elements.selectedLaunchApp.textContent, /media\/cryptofs/);
 assert.equal(requests.filter(r => r.method === 'launch').length, 0);
 
 elements.enableHomeLaunchOverride.onclick();
@@ -119,11 +124,17 @@ assert.equal(requests.filter(r => r.method === 'enableHomeLaunchOverride').lengt
 assert.equal(requests.filter(r => r.method === 'launch').length, 0,
     'configuring native Home icon must not start an app');
 assert.equal(elements.restoreHomeLaunchOverride.disabled, false);
-assert.match(elements.homeLaunchPolicyStatus.textContent, /reboot TV/);
+assert.match(elements.homeLaunchActionResult.textContent, /SUCCESS: Override saved, reboot TV/);
 elements.restoreHomeLaunchOverride.onclick();
 assert.equal(requests.filter(r => r.method === 'restoreHomeLaunchOverride').length, 1);
 assert.equal(elements.enableHomeLaunchOverride.disabled, false);
 assert.equal(elements.restoreHomeLaunchOverride.disabled, true);
+failHomeOverride = true;
+elements.enableHomeLaunchOverride.onclick();
+assert.match(elements.homeLaunchActionResult.textContent, /FAILED: simulated read-only app directory/,
+    'service errors must remain visible after the independent state refresh');
+assert.equal(elements.enableHomeLaunchOverride.disabled, false);
+failHomeOverride = false;
 
 elements.inspectLaunchApp.onclick();
 assert.match(elements.launchDiagnosticResult.textContent, /Installed.*Yes/);
