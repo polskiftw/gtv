@@ -78,6 +78,11 @@ launch_diagnostic_card = """    <div class="card" style="margin: 0 0 20px 0;">
             <div id="selectedLaunchApp" style="margin: 15px 0;">Select an installed app above.</div>
             <button id="inspectLaunchApp" disabled>Inspect Update Gate</button>
             <button id="launchWithoutUpdateCheck" disabled>Launch Without Update Check</button>
+            <h3>Use the Original Home Screen Icon</h3>
+            <p>Apply the same no-update-check policy to the installed app. The original icon stays where it is. One full TV restart is required.</p>
+            <div id="homeLaunchPolicyStatus" style="margin: 15px 0;">Select an app to check its Home icon launch setting.</div>
+            <button id="enableHomeLaunchOverride" disabled>Fix Original Home Icon</button>
+            <button id="restoreHomeLaunchOverride" disabled>Restore Original Launch Setting</button>
             <div id="launchDiagnosticResult" class="update-info" style="margin: 15px 0;">No app inspected yet.</div>
             <h3>Last launch test</h3>
             <div id="launchDiagnosticHistory" class="update-info" style="margin: 15px 0;">No launch test attempted.</div>
@@ -118,6 +123,8 @@ replacement = (
     + (patches / "firmware-cache-service.js").read_text().rstrip()
     + "\n\n"
     + (patches / "app-dependency-service.js").read_text().rstrip()
+    + "\n\n"
+    + (patches / "home-launch-service.js").read_text().rstrip()
     + "\n\n"
 )
 service.write_text(service_text[:start] + replacement + service_text[end:])
