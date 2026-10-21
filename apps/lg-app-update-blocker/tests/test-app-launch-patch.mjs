@@ -95,6 +95,7 @@ assert.equal(elements.launchWithoutUpdateCheck.disabled, true, 'no launch unless
 const choice = elements.launchAppList.children.find(item => item.textContent.includes('com.example.video'));
 assert.ok(choice);
 choice.onclick();
+assert.ok(elements.launchAppList.children.includes(choice), 'remote focus must survive app selection');
 assert.equal(elements.launchWithoutUpdateCheck.disabled, false);
 assert.match(elements.selectedLaunchApp.textContent, /checkUpdateOnLaunch: true/);
 assert.equal(requests.filter(r => r.method === 'launch').length, 0);
