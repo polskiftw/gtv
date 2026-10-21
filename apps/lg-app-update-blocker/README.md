@@ -20,6 +20,9 @@ A maintained patch of [`dr0dr1dr2dr3/lgappupdateblocker`](https://github.com/dr0
 - **Live App Launch Diagnostic** reads the installed-app inventory through Homebrew Channel's rooted service, showing the installed version and any reported checkUpdateOnLaunch manifest value. It compares the selected exact app ID against the two known update caches and, where permitted, reads the app's live load status.
 - **Launch Without Update Check** is a separate, opt-in action that sends checkUpdateOnLaunch:false to the public webOS TV Application Manager. It does not call the store, approve an update, modify an installed app, clear cache files, or install anything. The launcher request may be ignored or a prompt may originate inside the app itself, so a successful service response is **not** confirmation that an update gate was bypassed.
 - The last launch-test response is retained in this application's localStorage for review after switching back from the target app.
+- **Fix Original Home Icon** changes only the `checkUpdateOnLaunch` property in the selected *installed Content Store app's* `appinfo.json` to `false`, after saving the previous value to a protected local record. The title, icon, app ID, and Home-screen ordering are unchanged. A **full TV restart is required once** so SAM rereads the changed manifest; turning the TV off into Quick Start+/standby is not sufficient.
+- **Restore Original Launch Setting** restores only the saved `checkUpdateOnLaunch` property or its prior absence, leaving all other app manifest settings intact; also requires one full restart. Both actions use atomic temp-file writes and reject symlinks, mismatched app IDs, malformed manifests and non-Content-Store paths.
+- The original Home icon override is *not* automatically applied to every app and never runs by itself; only an explicit confirmation for a selected Content Store app makes changes. LG app updates could overwrite the setting. On read-only/system/preinstalled app paths, the feature reports unsupported rather than altering system partitions or restarting SAM automatically.
 - A locally adaptive neon `g` on the original icon that identifies the `gtv` build.
 
 The persistence hook is stored under `/var/lib/webosbrew/init.d/` because Homebrew Channel regenerates `/etc/hosts` at boot before running user init hooks. The hook keeps a persistent copy of the packaged domain list under `/var/lib/webosbrew/appupdateblocker/` and reapplies it directly to the freshly generated hosts file. It does not wait for, recurse through, or self-delete based on Luna service availability.
@@ -47,3 +50,13 @@ This directory retains the upstream BSD 3-Clause license. The build workflow fet
 4. If the app opens, the normal launcher/update-check path is implicated. If the same prompt persists, its origin may be an in-app check, another webOS service or additional runtime state. Report the outcome and the saved launch response.
 
 An absent cache match is only evidence about updateInfo and updateDependencyInfo, not every possible update gate. checkUpdateOnLaunch is part of the open-source SAM schema but is not documented by LG for this TV public launch API; firmware may ignore it. Inventory and live status calls may fail on some firmware builds and surface their errors instead of pretending success.
+
+
+## Keep the original Home-screen tile working (no extra launcher)
+
+1. Update LG App Update Blocker to the latest GTV build, open **Live App Launch Diagnostic**, and select the affected Content Store app.
+2. Under **Use the Original Home Screen Icon**, press **Fix Original Home Icon**, and confirm. This updates one app manifest property on disk and saves its previous value for recovery. It does **not** approve an LG app update or change the app executable.
+3. Use Homebrew Channel's **Reboot** feature to perform **one actual system restart** (not the remote standby button). After startup, launch the app from its **original Home icon**. No family member needs to open LG App Update Blocker.
+4. If needed, select the same app and use **Restore Original Launch Setting**, then reboot once. The separate **Launch Without Update Check** manual bypass remains available.
+
+**Limitations:** This uses the documented open-source SAM app-manifest flag, but LG retail firmware may differ. A store app can also replace its appinfo.json in a future reinstall or update. The policy editor deliberately only changes regular app manifests in `/media/cryptofs/apps/usr/palm/applications/`. For system, preinstalled, read-only, or custom directory apps the editor declines to operate rather than risk rewriting firmware files. The new behavior has been tested in CI; its effect on the original icon must be confirmed on the TV.
