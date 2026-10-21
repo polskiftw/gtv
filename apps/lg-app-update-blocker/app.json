@@ -3,15 +3,17 @@
   "kind": "upstream-patch",
   "id": "org.webosbrew.appupdateblocker",
   "title": "LG App Update Blocker",
-  "version": "3691.0.0",
-  "gtvRevision": 3,
-  "shortDescription": "LG update blocker with app dependency and firmware cache controls.",
-  "description": "LG App Update Blocker with 5-way remote navigation, reliable reboot-persistent update domain blocking, independent on-TV inspection and clearing of the secondary app-update dependency cache, and system firmware update cache cleanup without SSH.",
+  "version": "4691.0.0",
+  "gtvRevision": 4,
+  "shortDescription": "LG update blocker with live app launch diagnostics and update cache controls.",
+  "description": "LG App Update Blocker with 5-way remote navigation, reboot-persistent update-domain blocking, app-update cache inspection and clearing, a read-only installed-app/update-gate diagnostic, opt-in launch without checkUpdateOnLaunch, and firmware update-cache controls.",
   "changes": {
     "added": [
       "Five-way TV remote navigation with visible focus and OK-button support.",
       "System firmware update cache can be inspected and cleared from the TV UI without SSH.",
-      "Secondary app-update dependency state can be inspected and cleared separately from the standard forced-update list, without SSH."
+      "Secondary app-update dependency state can be inspected and cleared separately from the standard forced-update list, without SSH.",
+      "Installed-app inventory with per-app version, manifest update-check flag and live update-cache inspection.",
+      "Opt-in direct app launch using checkUpdateOnLaunch:false, with persisted diagnostic result and no update installation."
     ],
     "fixed": [
       "Update-domain blocking now persists reliably across TV reboots without depending on service startup timing."
