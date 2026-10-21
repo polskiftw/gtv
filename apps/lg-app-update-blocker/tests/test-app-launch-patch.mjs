@@ -23,8 +23,8 @@ assert.deepEqual(
 );
 assert.match(source, /checkUpdateOnLaunch:\s*false/, 'test must explicitly disable the launch-time update check');
 assert.match(source, /method:\s*'getAppLoadStatus'/);
-assert.match(source, /method:\s*'readUpdateInfo'/);
-assert.match(source, /method:\s*'readUpdateDependencyInfo'/);
+assert.match(source, /readKnownCache\('readUpdateInfo'/);
+assert.match(source, /readKnownCache\('readUpdateDependencyInfo'/);
 assert.match(source, /method:\s*'launch'/);
 assert.doesNotMatch(source, /installApplication|installById|downloadApp|clearUpdateInfo|clearUpdateDependencyInfo|writeFileSync/);
 assert.ok(source.indexOf('launchBtn.onclick = launchWithoutCheck') > source.indexOf('function launchWithoutCheck()'),
