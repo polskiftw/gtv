@@ -13,7 +13,7 @@ const appinfo = JSON.parse(fs.readFileSync(appinfoPath, 'utf8'));
 for (const id of ['refreshLaunchApps', 'previousLaunchPage', 'nextLaunchPage',
     'launchAppList', 'launchInventoryStatus', 'selectedLaunchApp', 'inspectLaunchApp',
     'launchWithoutUpdateCheck', 'launchDiagnosticResult', 'launchDiagnosticHistory',
-    'enableHomeLaunchOverride', 'restoreHomeLaunchOverride', 'homeLaunchPolicyStatus') {
+    'enableHomeLaunchOverride', 'restoreHomeLaunchOverride', 'homeLaunchPolicyStatus']) {
     assert.ok(html.includes('id="' + id + '"'), 'missing launch diagnostic UI element: ' + id);
 }
 assert.ok(html.includes('<script src="app-launch-ui.js"></script>'));
