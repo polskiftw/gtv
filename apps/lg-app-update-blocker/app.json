@@ -3,10 +3,10 @@
   "kind": "upstream-patch",
   "id": "org.webosbrew.appupdateblocker",
   "title": "LG App Update Blocker",
-  "version": "5691.0.0",
-  "gtvRevision": 5,
-  "shortDescription": "LG update blocker with a one-click fix for original Home screen app icons.",
-  "description": "LG App Update Blocker with original Home icon launch-policy override for Content Store apps, reversible per-app backups, opt-in update-free app launching, diagnostic tools, persistent update-domain blocking, and firmware/update-cache controls.",
+  "version": "6691.0.0",
+  "gtvRevision": 6,
+  "shortDescription": "LG app update blocker with directly actionable Home icon fixes and visible error messages.",
+  "description": "LG App Update Blocker with original Home icon launch-policy override, one-press changes without fragile browser dialogs, persistent success/failure reporting, opt-in no-update launches, cache inspection, and reboot-persistent update-domain blocking.",
   "changes": {
     "added": [
       "Five-way TV remote navigation with visible focus and OK-button support.",
@@ -18,7 +18,9 @@
     ],
     "fixed": [
       "Update-domain blocking now persists reliably across TV reboots without depending on service startup timing.",
-      "No extra launcher or duplicate Home icon is needed for supported Content Store apps; one full reboot reloads the updated app metadata."
+      "No extra launcher or duplicate Home icon is needed for supported Content Store apps; one full reboot reloads the updated app metadata.",
+      "Fix original Home icon action silently returning when webOS suppresses browser confirm() dialogs; explicit button press now immediately sends a reversible change.",
+      "Keep app-specific Home icon success/failure responses visible after status refresh and show the actual application directory reported by webOS."
     ]
   },
   "rootRequired": true,
