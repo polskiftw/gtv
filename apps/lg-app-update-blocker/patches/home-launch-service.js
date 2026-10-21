@@ -71,7 +71,7 @@ function homeLaunchAtomicWrite(file, content, existingStat) {
     try {
         fs.writeFileSync(tmp, content, { encoding: 'utf8', mode: existingStat ? (existingStat.mode & 4095) : 384, flag: 'wx' });
         if (existingStat) {
-            fs.chownSync(tmp, existingStat.uid, existingStat.gid);
+            if (process.getuid && process.getuid() === 0) fs.chownSync(tmp, existingStat.uid, existingStat.gid);
             fs.chmodSync(tmp, existingStat.mode & 4095);
         }
         fs.renameSync(tmp, file);
