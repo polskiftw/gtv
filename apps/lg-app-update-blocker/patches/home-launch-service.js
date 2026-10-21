@@ -31,7 +31,7 @@ function homeLaunchApp(id) {
     if (!homeLaunchValidId(id)) throw new Error('Invalid or protected application ID');
     var directory = path.join(HOME_LAUNCH_STORE_ROOT, id);
     var file = path.join(directory, 'appinfo.json');
-    if (!fs.existsSync(file)) return { supported: false, reason: 'App is not installed under the writable LG Content Store application directory' };
+    if (!fs.existsSync(file)) return { supported: false, reason: 'No installed app manifest at ' + file + '. This TV may be using a different application directory.' };
 
     // Refuse app aliases/symlinks escaping the expected Content Store root.
     var rootReal = fs.realpathSync(HOME_LAUNCH_STORE_ROOT);
@@ -96,7 +96,8 @@ function homeLaunchReadState(id) {
         disabledOnDisk: app.supported ? app.info.checkUpdateOnLaunch === false : false,
         originalValue: record && record.originalPresent ? record.originalValue : null,
         needsFullRestart: !!record,
-        installedVersion: app.supported ? (app.info.version || '') : ''
+        installedVersion: app.supported ? (app.info.version || '') : '',
+        manifestPath: app.supported ? app.path : ''
     };
 }
 
