@@ -86,6 +86,7 @@ jobs:
           node "$APP_DIR/tests/test-firmware-cache-patch.mjs" "$SRC/service/service.js" "$SRC/frontend/index.html" "$SRC/frontend/firmware-cache-ui.js"
           node "$APP_DIR/tests/test-app-dependency-patch.mjs" "$SRC/service/service.js" "$SRC/frontend/index.html" "$SRC/frontend/app-dependency-ui.js"
           node "$APP_DIR/tests/test-app-launch-patch.mjs" "$SRC/frontend/index.html" "$SRC/frontend/app-launch-ui.js" "$SRC/appinfo.json"
+          node "$APP_DIR/tests/test-home-launch-patch.mjs" "$SRC/service/service.js" "$SRC/frontend/index.html"
           python3 "$GITHUB_WORKSPACE/scripts/build-smart-icon.py" \
             --metadata "$APP_DIR/app.json" \
             --source "$SRC" \

@@ -3,20 +3,22 @@
   "kind": "upstream-patch",
   "id": "org.webosbrew.appupdateblocker",
   "title": "LG App Update Blocker",
-  "version": "4691.0.0",
-  "gtvRevision": 4,
-  "shortDescription": "LG update blocker with live app launch diagnostics and update cache controls.",
-  "description": "LG App Update Blocker with 5-way remote navigation, reboot-persistent update-domain blocking, app-update cache inspection and clearing, a read-only installed-app/update-gate diagnostic, opt-in launch without checkUpdateOnLaunch, and firmware update-cache controls.",
+  "version": "5691.0.0",
+  "gtvRevision": 5,
+  "shortDescription": "LG update blocker with a one-click fix for original Home screen app icons.",
+  "description": "LG App Update Blocker with original Home icon launch-policy override for Content Store apps, reversible per-app backups, opt-in update-free app launching, diagnostic tools, persistent update-domain blocking, and firmware/update-cache controls.",
   "changes": {
     "added": [
       "Five-way TV remote navigation with visible focus and OK-button support.",
       "System firmware update cache can be inspected and cleared from the TV UI without SSH.",
       "Secondary app-update dependency state can be inspected and cleared separately from the standard forced-update list, without SSH.",
       "Installed-app inventory with per-app version, manifest update-check flag and live update-cache inspection.",
-      "Opt-in direct app launch using checkUpdateOnLaunch:false, with persisted diagnostic result and no update installation."
+      "Opt-in direct app launch using checkUpdateOnLaunch:false, with persisted diagnostic result and no update installation.",
+      "Reversible original Home icon fix: save the previous Content Store appinfo launch setting, set checkUpdateOnLaunch:false, and restore on demand."
     ],
     "fixed": [
-      "Update-domain blocking now persists reliably across TV reboots without depending on service startup timing."
+      "Update-domain blocking now persists reliably across TV reboots without depending on service startup timing.",
+      "No extra launcher or duplicate Home icon is needed for supported Content Store apps; one full reboot reloads the updated app metadata."
     ]
   },
   "rootRequired": true,

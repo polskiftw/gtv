@@ -12,7 +12,8 @@ const appinfo = JSON.parse(fs.readFileSync(appinfoPath, 'utf8'));
 
 for (const id of ['refreshLaunchApps', 'previousLaunchPage', 'nextLaunchPage',
     'launchAppList', 'launchInventoryStatus', 'selectedLaunchApp', 'inspectLaunchApp',
-    'launchWithoutUpdateCheck', 'launchDiagnosticResult', 'launchDiagnosticHistory']) {
+    'launchWithoutUpdateCheck', 'launchDiagnosticResult', 'launchDiagnosticHistory',
+    'enableHomeLaunchOverride', 'restoreHomeLaunchOverride', 'homeLaunchPolicyStatus']) {
     assert.ok(html.includes('id="' + id + '"'), 'missing launch diagnostic UI element: ' + id);
 }
 assert.ok(html.includes('<script src="app-launch-ui.js"></script>'));
@@ -44,7 +45,8 @@ function element(id) {
 
 const ids = ['refreshLaunchApps', 'previousLaunchPage', 'nextLaunchPage',
     'launchAppList', 'launchInventoryStatus', 'selectedLaunchApp', 'inspectLaunchApp',
-    'launchWithoutUpdateCheck', 'launchDiagnosticResult', 'launchDiagnosticHistory', 'refreshUpdateInfo'];
+    'launchWithoutUpdateCheck', 'launchDiagnosticResult', 'launchDiagnosticHistory',
+    'enableHomeLaunchOverride', 'restoreHomeLaunchOverride', 'homeLaunchPolicyStatus', 'refreshUpdateInfo'];
 const elements = Object.fromEntries(ids.map(id => [id, element(id)]));
 elements.refreshUpdateInfo.disabled = false;
 const requests = [];
@@ -64,6 +66,15 @@ const tv = {
                     { id: 'com.example.other', title: 'Another', systemApp: false },
                     { id: 'com.example.injected;touch /tmp/pwn', title: '<img src=x>' }
                 ] }) };
+            } else if (request.method === 'readHomeLaunchOverride') {
+                response = { returnValue: true, supported: true, managed: !!storage.get('homeOverride'),
+                    disabledOnDisk: !!storage.get('homeOverride') };
+            } else if (request.method === 'enableHomeLaunchOverride') {
+                storage.set('homeOverride', true);
+                response = { returnValue: true, message: 'Override saved, reboot TV' };
+            } else if (request.method === 'restoreHomeLaunchOverride') {
+                storage.delete('homeOverride');
+                response = { returnValue: true, message: 'Original policy restored' };
             } else if (request.method === 'readUpdateInfo') {
                 response = { returnValue: true, content: '[{"id":"com.example.other"}]' };
             } else if (request.method === 'readUpdateDependencyInfo') {
@@ -84,6 +95,7 @@ vm.runInNewContext(source, {
     document: { getElementById(id) { return elements[id] || null; }, createElement(tag) { return element(tag); } },
     localStorage: { setItem(k, v) { storage.set(k, v); }, getItem(k) { return storage.get(k) || null; } },
     MutationObserver: class { observe() {} disconnect() {} },
+    confirm: () => true,
     Date, JSON, Object, Number, String, Math, Array
 });
 
@@ -97,8 +109,21 @@ assert.ok(choice);
 choice.onclick();
 assert.ok(elements.launchAppList.children.includes(choice), 'remote focus must survive app selection');
 assert.equal(elements.launchWithoutUpdateCheck.disabled, false);
+assert.equal(elements.enableHomeLaunchOverride.disabled, false, 'app can be configured for original Home icon');
+assert.equal(elements.restoreHomeLaunchOverride.disabled, true);
 assert.match(elements.selectedLaunchApp.textContent, /checkUpdateOnLaunch: true/);
 assert.equal(requests.filter(r => r.method === 'launch').length, 0);
+
+elements.enableHomeLaunchOverride.onclick();
+assert.equal(requests.filter(r => r.method === 'enableHomeLaunchOverride').length, 1);
+assert.equal(requests.filter(r => r.method === 'launch').length, 0,
+    'configuring native Home icon must not start an app');
+assert.equal(elements.restoreHomeLaunchOverride.disabled, false);
+assert.match(elements.homeLaunchPolicyStatus.textContent, /reboot TV/);
+elements.restoreHomeLaunchOverride.onclick();
+assert.equal(requests.filter(r => r.method === 'restoreHomeLaunchOverride').length, 1);
+assert.equal(elements.enableHomeLaunchOverride.disabled, false);
+assert.equal(elements.restoreHomeLaunchOverride.disabled, true);
 
 elements.inspectLaunchApp.onclick();
 assert.match(elements.launchDiagnosticResult.textContent, /Installed.*Yes/);
