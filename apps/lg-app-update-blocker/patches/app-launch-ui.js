@@ -67,7 +67,14 @@
                     app.title + ' — ' + app.id;
                 button.onclick = function () {
                     selected = appIndex;
-                    renderPage();
+                    // Keep the pressed button in the DOM so TV remote focus is not lost.
+                    for (var row = 0; row < listEl.children.length; row++) {
+                        var rowIndex = page * PAGE_SIZE + row;
+                        var rowApp = apps[rowIndex];
+                        listEl.children[row].textContent =
+                            (rowIndex === selected ? '[Selected] ' : '') +
+                            rowApp.title + ' — ' + rowApp.id;
+                    }
                     renderSelection();
                 };
                 listEl.appendChild(button);
