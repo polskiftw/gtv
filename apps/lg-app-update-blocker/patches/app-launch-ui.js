@@ -22,6 +22,7 @@
     var homeEnableBtn = document.getElementById('enableHomeLaunchOverride');
     var homeRestoreBtn = document.getElementById('restoreHomeLaunchOverride');
     var homeStatusEl = document.getElementById('homeLaunchPolicyStatus');
+    var homeActionEl = document.getElementById('homeLaunchActionResult');
     var homeLookupSerial = 0;
     var listEl = document.getElementById('launchAppList');
     var statusEl = document.getElementById('launchInventoryStatus');
@@ -30,7 +31,7 @@
     var historyEl = document.getElementById('launchDiagnosticHistory');
     var serviceReadyBtn = document.getElementById('refreshUpdateInfo');
     if (!refreshBtn || !previousBtn || !nextBtn || !inspectBtn || !launchBtn ||
-        !homeEnableBtn || !homeRestoreBtn || !homeStatusEl ||
+        !homeEnableBtn || !homeRestoreBtn || !homeStatusEl || !homeActionEl ||
         !listEl || !statusEl || !selectedEl || !reportEl || !historyEl || !serviceReadyBtn) return;
 
     function errorText(result) {
@@ -99,6 +100,7 @@
         homeEnableBtn.disabled = true;
         homeRestoreBtn.disabled = true;
         homeLookupSerial++;
+        homeActionEl.textContent = 'No Home icon change requested for this app.';
         if (!app) {
             homeStatusEl.textContent = 'Select an app to check its original Home icon.';
             selectedEl.textContent = 'Select an installed app above.';
@@ -108,7 +110,8 @@
             (app.checkUpdateOnLaunch ? 'true' : 'false');
         selectedEl.textContent = 'Selected: ' + app.title + ' (' + app.id + ')' +
             ' | Installed version: ' + (app.version || 'not reported') +
-            ' | Manifest checkUpdateOnLaunch: ' + flag;
+            ' | Manifest checkUpdateOnLaunch: ' + flag +
+            '\nActual webOS app folder: ' + (app.folderPath || 'not reported');
         reportEl.textContent = 'Press Inspect Update Gate to compare this app against the two known update caches.';
         loadHomeLaunchState(app.id, homeLookupSerial);
     }
@@ -126,8 +129,9 @@
                     return;
                 }
                 if (!state.supported) {
-                    homeStatusEl.textContent = state.reason ||
-                        'This app is not in the writable LG Content Store directory; its original Home icon cannot be changed using this method.';
+                    homeStatusEl.textContent = 'Original Home icon modification unavailable: ' + (state.reason ||
+                        'The app manifest is not in a supported writable directory.') +
+                        '\nWebOS application directory: ' + (selectedApp().folderPath || 'not reported');
                     return;
                 }
                 if (state.managed) {
@@ -137,7 +141,7 @@
                 } else {
                     homeStatusEl.textContent = state.disabledOnDisk ?
                         'The installed app manifest already has checkUpdateOnLaunch:false.' :
-                        'Ready: this will disable the installed app manifest update check. The same original Home icon remains in place.';
+                        'Ready: the selected app manifest can be changed. One click on Fix Original Home Icon will apply it; then reboot once. Original Home icon stays in place.';
                 }
                 homeEnableBtn.disabled = !ready || (state.managed && state.disabledOnDisk);
                 homeRestoreBtn.disabled = !ready || !state.managed;
@@ -153,45 +157,34 @@
         var app = selectedApp();
         if (!ready || !app || (method !== 'enableHomeLaunchOverride' && method !== 'restoreHomeLaunchOverride')) return;
         var enable = method === 'enableHomeLaunchOverride';
-        var promptText = enable ?
-            'Make the original Home screen icon for ' + app.title +
-            ' stop checking for app updates on launch?\n\n' +
-            'This changes one field in its installed app manifest, saves the previous value for undo, and needs ONE full TV reboot. It does not update or reinstall the app.' :
-            'Restore the original Home screen launch setting for ' + app.title +
-            '?\n\nThis restores only the saved launch-policy field and needs a full TV reboot.';
-        if (!confirm(promptText)) return;
         var id = app.id;
         var serial = ++homeLookupSerial;
         homeEnableBtn.disabled = true;
         homeRestoreBtn.disabled = true;
-        homeStatusEl.textContent = enable ? 'Enabling Home icon bypass...' : 'Restoring original Home icon setting...';
+        homeStatusEl.textContent = 'Checking updated Home icon policy...';
+        // The button itself is an explicit reversible action. webOS TV can suppress
+        // browser confirm() dialogs, leaving the control looking completely inert.
+        // Never rely on a native modal for feedback or authorization here.
+        homeActionEl.textContent = enable ?
+            'Applying the original Home icon update-check bypass for ' + app.title + '...' :
+            'Restoring the previous Home icon update-check setting for ' + app.title + '...';
         webOS.service.request(ROOT_SERVICE, {
             method: method,
             parameters: { id: id },
             onSuccess: function (response) {
                 if (serial !== homeLookupSerial) return;
                 if (response.returnValue !== true) {
-                    homeStatusEl.textContent = 'Could not change the original Home icon: ' + errorText(response);
-                    loadHomeLaunchState(id, serial);
-                    return;
+                    homeActionEl.textContent = 'FAILED: ' + errorText(response);
+                } else {
+                    homeActionEl.textContent = 'SUCCESS: ' +
+                        (response.message || 'Policy saved. Perform one full system reboot.');
                 }
-                homeStatusEl.textContent = response.message || 'Saved. Fully restart the TV once to apply.';
-                // Refresh the button state without changing or launching the selected app.
-                webOS.service.request(ROOT_SERVICE, {
-                    method: 'readHomeLaunchOverride',
-                    parameters: { id: id },
-                    onSuccess: function (state) {
-                        if (serial !== homeLookupSerial || !selectedApp() || selectedApp().id !== id) return;
-                        homeEnableBtn.disabled = state.returnValue !== true || !state.supported ||
-                            (state.managed && state.disabledOnDisk);
-                        homeRestoreBtn.disabled = state.returnValue !== true || !state.managed;
-                    },
-                    onFailure: function () {}
-                });
+                // The live-state refresh must never erase the success/failure result.
+                loadHomeLaunchState(id, serial);
             },
             onFailure: function (error) {
                 if (serial !== homeLookupSerial) return;
-                homeStatusEl.textContent = 'Could not change the original Home icon: ' + errorText(error);
+                homeActionEl.textContent = 'FAILED: ' + errorText(error);
                 loadHomeLaunchState(id, serial);
             }
         });
@@ -208,6 +201,7 @@
                 id: item.id,
                 title: typeof item.title === 'string' && item.title.trim() ? item.title : item.id,
                 version: typeof item.version === 'string' ? item.version : '',
+                folderPath: typeof item.folderPath === 'string' ? item.folderPath : '',
                 systemApp: item.systemApp === true,
                 checkUpdateOnLaunch: typeof item.checkUpdateOnLaunch === 'boolean' ?
                     item.checkUpdateOnLaunch : null
