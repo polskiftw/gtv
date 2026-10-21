@@ -117,6 +117,7 @@ service.register('enableHomeLaunchOverride', function (message) {
         var app = homeLaunchApp(id);
         if (!app.supported) throw new Error(app.reason);
         var record = homeLaunchRecord(id);
+        var createdRecord = false;
         if (!record) {
             homeLaunchMakeRecordDir();
             record = {
@@ -127,10 +128,20 @@ service.register('enableHomeLaunchOverride', function (message) {
             };
             // Save the *previous* policy before replacing the installed manifest.
             homeLaunchAtomicWrite(homeLaunchRecordPath(id), JSON.stringify(record, null, 2) + '\n', null);
+            createdRecord = true;
         }
-        if (app.info.checkUpdateOnLaunch !== false) {
-            app.info.checkUpdateOnLaunch = false;
-            homeLaunchAtomicWrite(app.path, JSON.stringify(app.info, null, 2) + '\n', app.stat);
+        try {
+            if (app.info.checkUpdateOnLaunch !== false) {
+                app.info.checkUpdateOnLaunch = false;
+                homeLaunchAtomicWrite(app.path, JSON.stringify(app.info, null, 2) + '\n', app.stat);
+            }
+        } catch (writeError) {
+            // If patching a read-only app failed, remove the record we just made.
+            // No installed file was replaced because atomic rename is the final step.
+            if (createdRecord) {
+                try { fs.unlinkSync(homeLaunchRecordPath(id)); } catch (ignored) {}
+            }
+            throw writeError;
         }
         message.respond({
             returnValue: true, id: id,
