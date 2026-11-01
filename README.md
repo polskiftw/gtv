@@ -117,3 +117,7 @@ Every directory under `apps/` must contain a `LICENSE` file with the complete ap
 Patched or derived applications preserve and comply with their upstream licenses, including the full license text and notices from the pinned upstream source.
 
 The `LICENSE` file inside an application directory is authoritative for that application.
+
+## Repository tooling license
+
+Original GTV build scripts, repository/feed tooling, branding, and documentation for which contributors hold the rights are licensed under **Apache License 2.0**; see the root [LICENSE](LICENSE). This does **not** change the licenses of patched upstream applications: LG App Update Blocker remains under BSD-3-Clause, and YouTube AdFree remains under GPL-3.0. The `LICENSE` inside each `apps/` directory remains authoritative for that application, as described above.
